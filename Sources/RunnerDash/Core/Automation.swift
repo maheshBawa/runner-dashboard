@@ -8,9 +8,6 @@ import UserNotifications
 final class Automation: NSObject, ObservableObject, UNUserNotificationCenterDelegate {
     @Published private(set) var keepingAwake = false
     @Published private(set) var latestRunnerVersion: String?
-    @Published private(set) var latestAppVersion: String?
-    @Published private(set) var appUpdateStep: AppUpdateStep?
-    @Published private(set) var appUpdateError: String?
     @Published private(set) var pausedForBattery = Set(UserDefaults.standard.stringArray(forKey: "pausedForBattery") ?? []) {
         didSet { UserDefaults.standard.set(Array(pausedForBattery), forKey: "pausedForBattery") }
     }
@@ -23,7 +20,6 @@ final class Automation: NSObject, ObservableObject, UNUserNotificationCenterDele
     private var assertion: IOPMAssertionID = 0
     private var lastAutoClean = Date.distantPast
     private var lastUpdateCheck = Date.distantPast
-    private var lastAppUpdateCheck = Date.distantPast
 
     override init() {
         super.init()
@@ -44,7 +40,6 @@ final class Automation: NSObject, ObservableObject, UNUserNotificationCenterDele
         batteryPause(store, prefs)
         autoClean(store, prefs)
         if Date().timeIntervalSince(lastUpdateCheck) > 6 * 3600 { checkForRunnerUpdate() }
-        if Date().timeIntervalSince(lastAppUpdateCheck) > 3600 { checkForAppUpdate() }
     }
 
     private func notifyJobs(_ runners: [Runner], _ prefs: UserDefaults) {
@@ -206,68 +201,5 @@ func postTestNotification(_ done: @escaping (Bool) -> Void) {
         content.body = "Notifications are working. You'll hear from me when a job fails, a runner goes offline or the disk fills up."
         content.sound = .default
         center.add(UNNotificationRequest(identifier: "test-\(UUID().uuidString)", content: content, trigger: nil)) { error in done(error == nil) }
-    }
-}
-
-let appRepo = "maheshBawa/runner-dashboard"
-let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-/// Apps opened from Finder don't get the shell's PATH, so look where Homebrew installs gh.
-let ghPath = ["/opt/homebrew/bin/gh", "/usr/local/bin/gh"].first { FileManager.default.isExecutableFile(atPath: $0) }
-
-enum AppUpdateStep: String, CaseIterable {
-    case downloading = "Downloading", checking = "Checking", installing = "Installing", restarting = "Restarting"
-    var fraction: Double { Double(Self.allCases.firstIndex(of: self)! + 1) / Double(Self.allCases.count) }
-}
-
-// ponytail: goes through the user's gh login because the repo is private (and gh downloads aren't quarantined).
-// Other Macs need gh signed in too; use a public repo or Sparkle if this ships beyond your own machines.
-extension Automation {
-    var appUpdateAvailable: Bool {
-        guard let appVersion, let latestAppVersion else { return false }
-        return isOlder(appVersion, than: latestAppVersion)
-    }
-
-    func checkForAppUpdate() {
-        lastAppUpdateCheck = Date()
-        guard let gh = ghPath, appVersion != nil else { return }
-        DispatchQueue.global().async {
-            let r = run(gh, ["release", "view", "-R", appRepo, "--json", "tagName", "-q", ".tagName"])
-            guard r.ok, let tag = r.out.split(separator: "\n").first, tag.hasPrefix("v") else { return }
-            DispatchQueue.main.async { self.latestAppVersion = String(tag.dropFirst()) }
-        }
-    }
-
-    /// Downloads the latest release, checks it, swaps it in for this copy of the app and restarts into it.
-    func installAppUpdate() {
-        guard let gh = ghPath, let version = latestAppVersion, appUpdateStep == nil else { return }
-        let app = Bundle.main.bundleURL
-        appUpdateError = nil
-        appUpdateStep = .downloading
-        DispatchQueue.global().async {
-            let fm = FileManager.default
-            func step(_ s: AppUpdateStep) { DispatchQueue.main.async { self.appUpdateStep = s } }
-            func fail(_ message: String) { DispatchQueue.main.async { self.appUpdateStep = nil; self.appUpdateError = message } }
-            // On the app's own volume, so the swap below is a rename.
-            guard let tmp = try? fm.url(for: .itemReplacementDirectory, in: .userDomainMask, appropriateFor: app, create: true) else { return fail("Couldn't make a folder for the download.") }
-            defer { try? fm.removeItem(at: tmp) }
-            let download = run(gh, ["release", "download", "v\(version)", "-R", appRepo, "-p", "*.zip", "-D", tmp.path])
-            guard download.ok, let zip = list(tmp.path).first(where: { $0.hasSuffix(".zip") }) else { return fail("Download failed. \(download.out)") }
-            step(.checking)
-            let new = tmp.appendingPathComponent("Runner Dashboard.app")
-            guard run("/usr/bin/ditto", ["-x", "-k", tmp.appendingPathComponent(zip).path, tmp.path]).ok,
-                  run("/usr/bin/codesign", ["--verify", "--deep", "--strict", new.path]).ok,
-                  Bundle(url: new)?.bundleIdentifier == Bundle.main.bundleIdentifier,
-                  run(new.appendingPathComponent("Contents/MacOS/RunnerDash").path, ["--selftest"]).ok
-            else { return fail("The download didn't pass its checks, so nothing was changed.") }
-            step(.installing)
-            do { _ = try fm.replaceItemAt(app, withItemAt: new) } catch { return fail("Couldn't replace the app: \(error.localizedDescription)") }
-            step(.restarting)
-            // A detached shell waits for this process to quit, then opens the new copy.
-            let relaunch = Process()
-            relaunch.executableURL = URL(fileURLWithPath: "/bin/sh")
-            relaunch.arguments = ["-c", "while kill -0 \(getpid()) 2>/dev/null; do sleep 0.2; done; open \"$0\"", app.path]
-            try? relaunch.run()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { NSApp.terminate(nil) }
-        }
     }
 }

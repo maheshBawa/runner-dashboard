@@ -6,15 +6,15 @@ Native SwiftUI menu bar + window app (macOS 14+, Apple silicon) for the self-hos
 ## Layout
 
 ```
-Package.swift                  two executable targets, Swift 5 language mode
+Package.swift                  two executable targets, Swift 5 language mode, Sparkle 2 dependency
 Sources/RunnerDash/            the app
   App/                         entry point, scenes, --selftest
-  Core/                        runner discovery, Store, network accounting, automation, app updates (no views)
+  Core/                        runner discovery, Store, network accounting, automation, Sparkle updater (no views)
   Views/                       SwiftUI screens and building blocks
 Sources/IconTool/              draws the app icon PNG
 Resources/Info.plist           template: build.sh fills APP_VERSION and BUILD_NUMBER
-scripts/build.sh               build, bundle, ad-hoc sign, install to ~/Applications, run --selftest
-.github/workflows/release.yml  v* tag -> build on macos-26 -> GitHub release with one zip
+scripts/build.sh               build, bundle (embeds Sparkle.framework), ad-hoc sign, install to ~/Applications, run --selftest
+.github/workflows/release.yml  v* tag -> build on macos-26 -> GitHub release with the zip + signed appcast.xml
 ```
 
 ## Commands
@@ -30,10 +30,23 @@ scripts/build.sh               build, bundle, ad-hoc sign, install to ~/Applicat
 - Before opening a PR, `scripts/build.sh` must pass (it runs `--selftest`). For UI changes, also check them in the running app.
 - Releases: after a merge, tag `main` with `vX.Y.Z` and push the tag. The workflow publishes the release, and installed copies offer the update within an hour.
 
+## App updates (Sparkle)
+
+- Installed apps read `SUFeedURL`, which is `releases/latest/download/appcast.xml`. That only works while the repo is public.
+- Sparkle compares `CFBundleVersion`, the build timestamp. A local build newer than the latest release is therefore never offered that release.
+- A scheduled find shows the "Update available" banner instead of a window (gentle reminders, `Core/AppUpdater.swift`). "Update now" and Settings › Check for Updates… open Sparkle's own window, which handles download, install and relaunch.
+- Signing key: the private EdDSA key is in the login Keychain (`generate_keys`), and CI has a copy in the `SPARKLE_PRIVATE_KEY` secret. Its public half is `SUPublicEDKey` in `Resources/Info.plist`. Losing or changing the key strands every installed copy, because without a Developer ID there's no way to rotate it. Keep a backup: `.build/artifacts/sparkle/Sparkle/bin/generate_keys -x <file>`.
+- To test locally:
+  1. Install an older build with `VERSION=1.1.9 scripts/build.sh`.
+  2. Then build a newer one with `APP=dist/new/...`, and zip it into `dist/feed`.
+  3. Run `generate_appcast --download-url-prefix http://127.0.0.1:8765/ dist/feed`, then serve it with `python3 -m http.server 8765 --directory dist/feed`.
+  4. Run `defaults write local.runner-dashboard SUFeedURL http://127.0.0.1:8765/appcast.xml` and set `SULastCheckTime` to an old date.
+  5. Relaunch the older build.
+  6. Afterwards, run `defaults delete local.runner-dashboard SUFeedURL`.
+
 ## Don't break
 
-- Keep the bundle name `Runner Dashboard.app`, the executable `Contents/MacOS/RunnerDash`, the bundle id `local.runner-dashboard` and a single `*.zip` release asset. The updater in copies already installed depends on all four.
-- `--selftest` must pass on a clean machine with no runners and no network. The updater refuses a download whose self-check fails.
+- Keep the bundle name `Runner Dashboard.app`, the executable `Contents/MacOS/RunnerDash`, the bundle id `local.runner-dashboard` and exactly one `*.zip` per release. The pre-Sparkle `gh` updater in v1.1.0 depends on all four, as well as on `--selftest` passing on a clean machine.
 - Swift 5 language mode: the existing code doesn't build under Swift 6 strict concurrency.
 - File-scoped state must stay in the same file as its users. That covers the top-level `private` caches (`runLinkCache`, `serviceLogCache`) and `Automation`'s `private(set)` properties, which the app-update extension sets.
 - `UNUserNotificationCenter` crashes outside an app bundle, so guard on `Bundle.main.bundleIdentifier`.
@@ -50,10 +63,10 @@ scripts/build.sh               build, bundle, ad-hoc sign, install to ~/Applicat
   - `readabilityHandler` never fires on a pty master, so read it on a blocking thread.
   - Snapshot parent pids at 4 Hz, because short downloads finish between nettop samples.
 - Data lives in `~/Library/Application Support/Runner Dashboard/`, for example `network-usage.json`, keyed by local hour start.
-- App updates (`Core/Automation.swift`) go through the user's `gh` login, because the repo is private.
 
 ## Checking the UI from a terminal
 
 - The terminal has Accessibility permission but not Screen Recording, so read the UI through System Events (`entire contents of window 1` of process "RunnerDash").
 - An AX click doesn't open the MenuBarExtra panel. Post a CGEvent mouse click on the status item instead; System Events gives its position (`menu bar item 1 of menu bar 2`).
-- To test the updater, `VERSION=1.0.1 scripts/build.sh` installs a build labelled older than the latest release.
+- Sparkle's windows are plain AppKit, so System Events can read their buttons ("Install Update", "Install and Relaunch").
+- `log` is a zsh builtin: use `/usr/bin/log show`.
