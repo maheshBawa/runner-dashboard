@@ -6,6 +6,11 @@ func parseConfigCommand(_ text: String) -> (url: String, token: String)? {
     return (url.hasSuffix("/") ? String(url.dropLast()) : url, token)
 }
 
+/// Extra labels typed as "ios, xcode-16" or "ios xcode-16".
+func parseLabels(_ text: String) -> [String] {
+    text.split { $0 == "," || $0.isWhitespace }.map(String.init)
+}
+
 /// config.sh's default name (the short hostname), numbered when this Mac already has a runner for the same org or repo:
 /// GitHub wants unique names there, and svc.sh names the launch agent actions.runner.<org>.<name>.
 func defaultRunnerName(for url: String, existing: [Runner]) -> String {
@@ -29,7 +34,7 @@ func newRunnerDir(for url: String) -> String {
 
 /// GitHub's setup steps for a new runner, then svc.sh install + start: downloads the latest runner into a new
 /// ~/actions-runner-* folder, registers it and starts it as a launch agent. Returns an error message, or nil.
-func createRunner(url: String, token: String, name: String, step: (String) -> Void) -> String? {
+func createRunner(url: String, token: String, name: String, labels: [String], step: (String) -> Void) -> String? {
     step("Finding the latest runner…")
     let release = run("/usr/bin/curl", ["-fsSL", "https://api.github.com/repos/actions/runner/releases/latest"])
     guard let version = capture("\"tag_name\":\\s*\"v([^\"]+)\"", in: release.out) else {
@@ -49,7 +54,9 @@ func createRunner(url: String, token: String, name: String, step: (String) -> Vo
     step("Registering with GitHub…")
     // Through an interactive login shell, as if run in Terminal: config.sh saves its PATH and tool variables (JAVA_HOME,
     // ANDROID_HOME, …) for jobs to use, and the app's own environment has neither Homebrew nor those.
-    r = run(loginShell, ["-ilc", "exec \"$0\" \"$@\"", dir + "/config.sh", "--unattended", "--url", url, "--token", token, "--name", name], in: dir)
+    // --labels adds to the defaults (self-hosted, macOS, ARM64).
+    let args = ["--unattended", "--url", url, "--token", token, "--name", name] + (labels.isEmpty ? [] : ["--labels", labels.joined(separator: ",")])
+    r = run(loginShell, ["-ilc", "exec \"$0\" \"$@\"", dir + "/config.sh"] + args, in: dir)
     guard r.ok else { return fail(configError(r.out)) }
     step("Starting…")
     for cmd in ["install", "start"] {

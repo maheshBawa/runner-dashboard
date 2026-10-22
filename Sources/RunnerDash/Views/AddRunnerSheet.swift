@@ -6,6 +6,7 @@ struct AddRunnerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var command = ""
     @State private var name = ""
+    @State private var labels = ""
     @State private var step: String?
     @State private var error: String?
 
@@ -29,6 +30,12 @@ struct AddRunnerSheet: View {
             }
             LabeledContent("Runner name") {
                 TextField("Runner name", text: $name).labelsHidden().frame(width: 240)
+            }
+            LabeledContent {
+                TextField("Optional, e.g. ios, xcode-16", text: $labels).labelsHidden().frame(width: 240)
+            } label: {
+                Text("Labels")
+                Text("Added to self-hosted, macOS and ARM64")
             }
             if let step {
                 HStack(spacing: 8) { ProgressView().controlSize(.small); Text(step) }
@@ -54,9 +61,9 @@ struct AddRunnerSheet: View {
 
     private func create(_ p: (url: String, token: String)) {
         (error, step) = (nil, "Starting…")
-        let name = name
+        let (name, labels) = (name, parseLabels(labels))
         DispatchQueue.global(qos: .userInitiated).async {
-            let failure = createRunner(url: p.url, token: p.token, name: name) { s in DispatchQueue.main.async { step = s } }
+            let failure = createRunner(url: p.url, token: p.token, name: name, labels: labels) { s in DispatchQueue.main.async { step = s } }
             DispatchQueue.main.async {
                 step = nil
                 store.refresh()

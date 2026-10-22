@@ -44,6 +44,7 @@ func selfTest() {
     precondition(newRunnerDir(for: "https://github.com/..").hasPrefix(home + "/actions-runner-runner"))
     precondition(configError("Http response code: NotFound from 'POST https://api.github.com/actions/runner-registration'").hasPrefix("GitHub didn't accept"))
     precondition(configError("a\n\n b \nc\nd\n") == "b\nc\nd")
+    precondition(parseLabels(" ios, xcode-16  fastlane,") == ["ios", "xcode-16", "fastlane"] && parseLabels(" ").isEmpty)
     // Sparkle compares CFBundleVersion: a local 1.1.0 built after the 1.1.1 release must still be offered 1.1.1.
     if let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String, let appVersion {
         precondition(build.hasPrefix(appVersion + "."), "CFBundleVersion \(build) must start with the version")
