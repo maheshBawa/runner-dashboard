@@ -14,6 +14,7 @@ Sources/RunnerDash/            the app
 Sources/IconTool/              draws the app icon PNG
 Resources/Info.plist           template: build.sh fills APP_VERSION and BUILD_NUMBER
 scripts/build.sh               build, bundle (embeds Sparkle.framework), ad-hoc sign, install to ~/Applications, run --selftest
+scripts/install.sh             the README's curl | bash installer: latest release zip -> ~/Applications, no quarantine
 .github/workflows/release.yml  Run workflow (bump) or v* tag -> build on macos-26 -> GitHub release with the zip + signed appcast.xml
 ```
 
@@ -46,7 +47,7 @@ scripts/build.sh               build, bundle (embeds Sparkle.framework), ad-hoc 
 
 ## Don't break
 
-- Keep the bundle name `Runner Dashboard.app`, the executable `Contents/MacOS/RunnerDash`, the bundle id `local.runner-dashboard` and exactly one `*.zip` per release. The pre-Sparkle `gh` updater in v1.1.0 depends on all four, as well as on `--selftest` passing on a clean machine.
+- Keep the bundle name `Runner Dashboard.app`, the executable `Contents/MacOS/RunnerDash`, the bundle id `local.runner-dashboard` and exactly one `*.zip` per release. The pre-Sparkle `gh` updater in v1.1.0 depends on all four, as well as on `--selftest` passing on a clean machine. `scripts/install.sh` also expects the zip to be named `Runner-Dashboard-<tag>.zip`.
 - Swift 5 language mode: the existing code doesn't build under Swift 6 strict concurrency.
 - File-scoped state must stay in the same file as its users. That covers the top-level `private` caches (`runLinkCache`, `serviceLogCache`) and `Automation`'s `private(set)` properties, which the app-update extension sets.
 - `UNUserNotificationCenter` crashes outside an app bundle, so guard on `Bundle.main.bundleIdentifier`.

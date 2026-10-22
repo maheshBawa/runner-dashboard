@@ -2,6 +2,16 @@
 
 A macOS menu bar app for watching and managing the self-hosted GitHub Actions runners on this Mac.
 
+## Install
+
+Requires macOS 14 or later on Apple silicon. Run this in Terminal:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/maheshBawa/runner-dashboard/main/scripts/install.sh | bash
+```
+
+It installs the latest release into `~/Applications` and opens it in the menu bar. The app then updates itself.
+
 ## Release
 
 [![Release](https://github.com/maheshBawa/runner-dashboard/actions/workflows/release.yml/badge.svg)](https://github.com/maheshBawa/runner-dashboard/actions/workflows/release.yml)
