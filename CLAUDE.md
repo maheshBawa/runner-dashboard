@@ -33,7 +33,9 @@ docs/                          README screenshots (runner, Wi-Fi and Mac names r
 - Deliver every feature and fix as a PR. Branch from `main` (`feat/…`, `fix/…`, `chore/…`), push, then `gh pr create`. Never commit or push to `main` directly: the user reviews and merges.
 - Before opening a PR, `scripts/build.sh` must pass (it runs `--selftest`). For UI changes, also check them in the running app. Say in the PR what you couldn't test, for example a path that needs a real GitHub token.
 - Releases: the user runs Actions › Release › Run workflow and picks patch, minor or major (linked from README.md). CI bumps the latest tag, tags `main` and publishes. Pushing a `vX.Y.Z` tag still works for a specific version. Installed copies offer the update within an hour.
-- Screenshots in `docs/` and the README must never show the user's real runner names, Wi-Fi name or Mac name. Use the placeholders `northwind-traders`, `Contoso`, `Tailspin-Toys`, `Office-WiFi-5G` and `build-mac`.
+- Screenshots in `docs/` and the README must never show the user's real runner names, Wi-Fi name or Mac name, including in folder paths such as `~/actions-runner-<name>`. Use the placeholders `northwind-traders`, `Contoso`, `Tailspin-Toys`, `Office-WiFi-5G` and `build-mac`. `runner-dashboard`, this public repo's own runner, can stay.
+  - Crop sheets to the sheet itself (the dimmed page behind shows names), and give every image transparent rounded corners and a soft shadow, so it works on GitHub's light and dark themes.
+  - The terminal can't capture the screen, so the user takes the screenshots.
 
 ## Release runner (public repo)
 
