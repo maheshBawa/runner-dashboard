@@ -1,6 +1,6 @@
 // Draws the Runner Dashboard app icon (1024×1024 PNG) on Apple's macOS icon grid: an 824-pt continuous-corner squircle
 // with a 100-pt margin. Three server blades (one per runner, with status lights) and a heartbeat line for monitoring.
-// Custom shapes only: SF Symbols may not be used in app icons. Run by build.sh: icon <out.png>
+// Custom shapes only: SF Symbols may not be used in app icons. Run by scripts/build.sh: IconTool <out.png>
 import AppKit
 import SwiftUI
 
