@@ -1,8 +1,8 @@
 #!/bin/bash
-# Builds ~/Applications/Runner Dashboard.app from RunnerDash.swift + Features.swift and runs its self-check.
+# Builds ~/Applications/Runner Dashboard.app (or $APP, versioned $VERSION) from RunnerDash.swift + Features.swift and runs its self-check.
 set -euo pipefail
 cd "$(dirname "$0")"
-APP="$HOME/Applications/Runner Dashboard.app"
+APP="${APP:-$HOME/Applications/Runner Dashboard.app}"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 # App icon: drawn by icon.swift, regenerated only when icon.swift changes.
 if [ ! -f AppIcon.icns ] || [ icon.swift -nt AppIcon.icns ]; then
@@ -28,7 +28,7 @@ cat > "$APP/Contents/Info.plist" <<'EOF'
   <key>CFBundleName</key><string>Runner Dashboard</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>1.0</string>
+  <key>CFBundleShortVersionString</key><string>APP_VERSION</string>
   <key>CFBundleVersion</key><string>BUILD_NUMBER</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>
@@ -37,7 +37,7 @@ cat > "$APP/Contents/Info.plist" <<'EOF'
 </dict></plist>
 EOF
 # A new build number per build makes Finder and Notification Center reload the icon instead of using a cached copy.
-sed -i '' "s/BUILD_NUMBER/$(date +%Y%m%d%H%M%S)/" "$APP/Contents/Info.plist"
+sed -i '' -e "s/BUILD_NUMBER/$(date +%Y%m%d%H%M%S)/" -e "s/APP_VERSION/${VERSION:-1.0}/" "$APP/Contents/Info.plist"
 codesign --force -s - "$APP"
 # Tell Finder, Spotlight and Notification Center about the (new) icon.
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$APP"

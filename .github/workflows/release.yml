@@ -1,0 +1,24 @@
+# Push a tag like v1.2.0 to build the app and publish it as a GitHub release.
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    # ponytail: GitHub-hosted, since the self-hosted runners are registered to orgs and this repo is personal.
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build
+        run: APP="$PWD/dist/Runner Dashboard.app" VERSION="${GITHUB_REF_NAME#v}" ./build.sh
+      - name: Zip
+        run: ditto -c -k --keepParent "dist/Runner Dashboard.app" "dist/Runner-Dashboard-$GITHUB_REF_NAME.zip"
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # ponytail: ad-hoc signed only, so browser downloads get quarantined. Add Developer ID signing + notarization if this is shared beyond your own Macs.
+        run: |
+          gh release create "$GITHUB_REF_NAME" "dist/Runner-Dashboard-$GITHUB_REF_NAME.zip" --generate-notes --notes \
+            'Ad-hoc signed. After unzipping, run `xattr -dr com.apple.quarantine "Runner Dashboard.app"` and move it to ~/Applications, or download with `gh release download` to skip the quarantine.'
