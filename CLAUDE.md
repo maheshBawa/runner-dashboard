@@ -32,6 +32,7 @@ docs/                          README screenshots (runner, Wi-Fi and Mac names r
 - Before opening a PR, `scripts/build.sh` must pass (it runs `--selftest`). For UI changes, also check them in the running app.
 - Releases: the user runs Actions › Release › Run workflow and picks patch, minor or major (linked from README.md). CI bumps the latest tag, tags `main` and publishes. Pushing a `vX.Y.Z` tag still works for a specific version. Installed copies offer the update within an hour.
 - Release runner: `Runner-Dashboard-builder`, registered to this repo only, in `~/actions-runner-runner-dashboard` on the user's Mac. It uses that Mac's Xcode and the `gh` on its PATH. macOS registers any app bundle it sees, so the Clean up step unregisters the build (`lsregister -u`) and deletes it. Otherwise a second copy with the same bundle id stays on the Mac.
+- The repo is public and that runner is the user's Mac. Any workflow run on it has full access as the user: other runners' credentials, keys, persistence. Fork PRs bring their own workflow files, so the repo requires approval for every outside contributor's run (Settings › Actions › General › Fork pull request workflows). Never suggest approving a run without reading the PR's `.github/` changes, and keep `release.yml` limited to tag push and `workflow_dispatch`, which outsiders can't trigger.
 
 ## App updates (Sparkle)
 
