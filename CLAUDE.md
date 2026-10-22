@@ -33,7 +33,7 @@ scripts/build.sh               build, bundle (embeds Sparkle.framework), ad-hoc 
 ## App updates (Sparkle)
 
 - Installed apps read `SUFeedURL`, which is `releases/latest/download/appcast.xml`. That only works while the repo is public.
-- Sparkle compares `CFBundleVersion`, the build timestamp. A local build newer than the latest release is therefore never offered that release.
+- Sparkle compares `CFBundleVersion`, which `build.sh` sets to `<version>.<UTC build time>`, so the version decides. A pure timestamp broke this once: a local build in IST outranked a newer CI release built in UTC. `--selftest` checks the format.
 - A scheduled find shows the "Update available" banner instead of a window (gentle reminders, `Core/AppUpdater.swift`). "Update now" and Settings › Check for Updates… open Sparkle's own window, which handles download, install and relaunch.
 - Signing key: the private EdDSA key is in the login Keychain (`generate_keys`), and CI has a copy in the `SPARKLE_PRIVATE_KEY` secret. Its public half is `SUPublicEDKey` in `Resources/Info.plist`. Losing or changing the key strands every installed copy, because without a Developer ID there's no way to rotate it. Keep a backup: `.build/artifacts/sparkle/Sparkle/bin/generate_keys -x <file>`.
 - To test locally:
