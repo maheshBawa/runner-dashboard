@@ -10,6 +10,10 @@
   <key>CFBundleVersion</key><string>BUILD_NUMBER</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSUIElement</key><true/>
+  <key>SUFeedURL</key><string>https://github.com/maheshBawa/runner-dashboard/releases/latest/download/appcast.xml</string>
+  <key>SUPublicEDKey</key><string>YMOBsDmQTqXPMViwhNLWP69a0DbWxMvR2AWN2orpFyc=</string>
+  <key>SUEnableAutomaticChecks</key><true/>
+  <key>SUScheduledCheckInterval</key><integer>3600</integer>
   <key>NSLocationUsageDescription</key><string>Runner Dashboard reads the name of the Wi-Fi network you're on so it can track data usage per network. Your location is never used or stored.</string>
   <key>NSLocationWhenInUseUsageDescription</key><string>Runner Dashboard reads the name of the Wi-Fi network you're on so it can track data usage per network. Your location is never used or stored.</string>
 </dict></plist>

@@ -28,6 +28,7 @@ struct SettingsView: View {
     @AppStorage(Pref.batteryPause) private var batteryPause = false
     @AppStorage(Pref.batteryPercent) private var batteryPercent = 30
     @State private var testResult: String?
+    @EnvironmentObject var updater: AppUpdater
 
     var body: some View {
         Form {
@@ -79,6 +80,9 @@ struct SettingsView: View {
                 if let testResult { Text(testResult).font(.caption).foregroundStyle(.secondary) }
                 LabeledContent("Menu bar icon") {
                     Button("Preview build animation") { requestMenuIconPreview() }
+                }
+                LabeledContent("Version \(appVersion ?? "?")") {
+                    Button("Check for Updates…") { updater.checkForUpdates() }
                 }
             }
         }

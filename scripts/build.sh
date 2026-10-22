@@ -24,6 +24,10 @@ cp $ICNS "$APP/Contents/Resources/AppIcon.icns"
 # A fresh file rather than overwriting in place, so a running copy of the app doesn't crash on a changed binary.
 rm -f "$APP/Contents/MacOS/RunnerDash"
 cp "$BIN/RunnerDash" "$APP/Contents/MacOS/RunnerDash"
+# Sparkle (app updates) loads from Contents/Frameworks; ditto keeps the framework's symlinks.
+rm -rf "$APP/Contents/Frameworks"
+mkdir -p "$APP/Contents/Frameworks"
+ditto "$BIN/Sparkle.framework" "$APP/Contents/Frameworks/Sparkle.framework"
 # A new build number per build makes Finder and Notification Center reload the icon instead of using a cached copy.
 sed -e "s/BUILD_NUMBER/$(date +%Y%m%d%H%M%S)/" -e "s/APP_VERSION/${VERSION#v}/" Resources/Info.plist > "$APP/Contents/Info.plist"
 codesign --force -s - "$APP"

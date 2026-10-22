@@ -3,6 +3,7 @@ import SwiftUI
 final class Store: ObservableObject {
     let net = NetworkUsage()
     let automation = Automation()
+    let updater = AppUpdater()
     let resources = ResourceHistory()
     let menuBarIcon = MenuBarIcon()
     @Published var runners: [Runner] = []

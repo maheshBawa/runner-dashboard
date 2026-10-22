@@ -14,11 +14,22 @@ jobs:
       - name: Build
         run: APP="$PWD/dist/Runner Dashboard.app" VERSION="${GITHUB_REF_NAME#v}" scripts/build.sh
       - name: Zip
-        run: ditto -c -k --keepParent "dist/Runner Dashboard.app" "dist/Runner-Dashboard-$GITHUB_REF_NAME.zip"
+        run: mkdir dist/release && ditto -c -k --keepParent "dist/Runner Dashboard.app" "dist/release/Runner-Dashboard-$GITHUB_REF_NAME.zip"
+      - name: Appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        # Signs the zip with the EdDSA key whose public half is SUPublicEDKey in Info.plist. Installed apps read this
+        # appcast from releases/latest/download/appcast.xml (SUFeedURL).
+        run: |
+          printf '%s' "$SPARKLE_PRIVATE_KEY" | .build/artifacts/sparkle/Sparkle/bin/generate_appcast --ed-key-file - \
+            --download-url-prefix "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/" \
+            --full-release-notes-url "https://github.com/$GITHUB_REPOSITORY/releases" \
+            -o dist/release/appcast.xml dist/release
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
-        # ponytail: ad-hoc signed only, so browser downloads get quarantined. Add Developer ID signing + notarization if this is shared beyond your own Macs.
+        # ponytail: ad-hoc signed only, so a first install from the browser gets quarantined (Sparkle updates don't).
+        # Add Developer ID signing + notarization to drop the xattr step.
         run: |
-          gh release create "$GITHUB_REF_NAME" "dist/Runner-Dashboard-$GITHUB_REF_NAME.zip" --generate-notes --notes \
+          gh release create "$GITHUB_REF_NAME" dist/release/*.zip dist/release/appcast.xml --generate-notes --notes \
             'Ad-hoc signed. After unzipping, run `xattr -dr com.apple.quarantine "Runner Dashboard.app"` and move it to ~/Applications, or download with `gh release download` to skip the quarantine.'

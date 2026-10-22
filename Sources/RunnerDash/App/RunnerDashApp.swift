@@ -40,19 +40,19 @@ struct RunnerDashApp: App {
 
     var body: some Scene {
         Window("Runner Dashboard", id: "dashboard") {
-            RootView().environmentObject(store).environmentObject(store.net).environmentObject(store.automation).frame(minWidth: 860, minHeight: 640)
+            RootView().environmentObject(store).environmentObject(store.net).environmentObject(store.automation).environmentObject(store.updater).frame(minWidth: 860, minHeight: 640)
         }
         .defaultSize(width: 1180, height: 900)
 
         MenuBarExtra {
-            MenuPanel().environmentObject(store).environmentObject(store.net).environmentObject(store.automation)
+            MenuPanel().environmentObject(store).environmentObject(store.net).environmentObject(store.automation).environmentObject(store.updater)
         } label: {
             MenuBarLabel(icon: store.menuBarIcon)
         }
         .menuBarExtraStyle(.window)
 
         Settings {
-            SettingsView()
+            SettingsView().environmentObject(store.updater)
         }
     }
 }
