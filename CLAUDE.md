@@ -14,7 +14,7 @@ Sources/RunnerDash/            the app
 Sources/IconTool/              draws the app icon PNG
 Resources/Info.plist           template: build.sh fills APP_VERSION and BUILD_NUMBER
 scripts/build.sh               build, bundle (embeds Sparkle.framework), ad-hoc sign, install to ~/Applications, run --selftest
-.github/workflows/release.yml  v* tag -> build on macos-26 -> GitHub release with the zip + signed appcast.xml
+.github/workflows/release.yml  Run workflow (bump) or v* tag -> build on macos-26 -> GitHub release with the zip + signed appcast.xml
 ```
 
 ## Commands
@@ -28,7 +28,7 @@ scripts/build.sh               build, bundle (embeds Sparkle.framework), ad-hoc 
 
 - Deliver every feature and fix as a PR. Branch from `main` (`feat/…`, `fix/…`, `chore/…`), push, then `gh pr create`. Never commit or push to `main` directly: the user reviews and merges.
 - Before opening a PR, `scripts/build.sh` must pass (it runs `--selftest`). For UI changes, also check them in the running app.
-- Releases: after a merge, tag `main` with `vX.Y.Z` and push the tag. The workflow publishes the release, and installed copies offer the update within an hour.
+- Releases: the user runs Actions › Release › Run workflow and picks patch, minor or major (linked from README.md). CI bumps the latest tag, tags `main` and publishes. Pushing a `vX.Y.Z` tag still works for a specific version. Installed copies offer the update within an hour.
 
 ## App updates (Sparkle)
 

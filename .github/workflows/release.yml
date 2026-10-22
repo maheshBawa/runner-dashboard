@@ -1,20 +1,48 @@
-# Push a tag like v1.2.0 to build the app and publish it as a GitHub release.
+# Builds the app and publishes it as a GitHub release, either from Actions › Release › Run workflow (bumps the latest
+# tag and tags main) or from pushing a tag like v1.2.0.
 name: Release
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Which part of the version to bump
+        type: choice
+        options: [patch, minor, major]
+        default: patch
 permissions:
   contents: write
 jobs:
   release:
+    # Only main is released from the button; a tag push releases whatever the tag points at.
+    if: github.event_name == 'push' || github.ref == 'refs/heads/main'
     # ponytail: GitHub-hosted, since the self-hosted runners are registered to orgs and this repo is personal.
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # the tags, to find the latest version
+      - name: Version
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = push ]; then
+            TAG="$GITHUB_REF_NAME"
+          else
+            IFS=. read -r major minor patch <<< "$(git describe --tags --abbrev=0 --match 'v*' | sed 's/^v//')"
+            case "$BUMP" in
+              major) TAG="v$((major + 1)).0.0" ;;
+              minor) TAG="v$major.$((minor + 1)).0" ;;
+              *) TAG="v$major.$minor.$((patch + 1))" ;;
+            esac
+          fi
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "Releasing $TAG"
       - name: Build
-        run: APP="$PWD/dist/Runner Dashboard.app" VERSION="${GITHUB_REF_NAME#v}" scripts/build.sh
+        run: APP="$PWD/dist/Runner Dashboard.app" VERSION="${TAG#v}" scripts/build.sh
       - name: Zip
-        run: mkdir dist/release && ditto -c -k --keepParent "dist/Runner Dashboard.app" "dist/release/Runner-Dashboard-$GITHUB_REF_NAME.zip"
+        run: mkdir dist/release && ditto -c -k --keepParent "dist/Runner Dashboard.app" "dist/release/Runner-Dashboard-$TAG.zip"
       - name: Appcast
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
@@ -22,14 +50,16 @@ jobs:
         # appcast from releases/latest/download/appcast.xml (SUFeedURL).
         run: |
           printf '%s' "$SPARKLE_PRIVATE_KEY" | .build/artifacts/sparkle/Sparkle/bin/generate_appcast --ed-key-file - \
-            --download-url-prefix "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/" \
+            --download-url-prefix "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/" \
             --full-release-notes-url "https://github.com/$GITHUB_REPOSITORY/releases" \
             -o dist/release/appcast.xml dist/release
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
+        # Creates the tag on the built commit when it doesn't exist yet (the button). Tags made with GITHUB_TOKEN don't
+        # trigger workflows, so this doesn't start a second release.
         # ponytail: ad-hoc signed only, so a first install from the browser gets quarantined (Sparkle updates don't).
         # Add Developer ID signing + notarization to drop the xattr step.
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/release/*.zip dist/release/appcast.xml --generate-notes --notes \
+          gh release create "$TAG" dist/release/*.zip dist/release/appcast.xml --target "$GITHUB_SHA" --generate-notes --notes \
             'Ad-hoc signed. After unzipping, run `xattr -dr com.apple.quarantine "Runner Dashboard.app"` and move it to ~/Applications, or download with `gh release download` to skip the quarantine.'
