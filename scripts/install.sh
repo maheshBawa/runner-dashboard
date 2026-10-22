@@ -10,7 +10,7 @@ APP="$HOME/Applications/Runner Dashboard.app"
 TAG=$(basename "$(curl -fsSLI -o /dev/null -w '%{url_effective}' "https://github.com/$REPO/releases/latest")")
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
-echo "Downloading Runner Dashboard $TAG…"
+echo "Downloading Runner Dashboard $TAG..."
 curl -fL --progress-bar -o "$TMP/app.zip" "https://github.com/$REPO/releases/download/$TAG/Runner-Dashboard-$TAG.zip"
 ditto -x -k "$TMP/app.zip" "$TMP"
 pkill -x RunnerDash || true
