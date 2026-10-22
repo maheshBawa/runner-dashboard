@@ -15,6 +15,7 @@ Sources/IconTool/              draws the app icon PNG
 Resources/Info.plist           template: build.sh fills APP_VERSION and BUILD_NUMBER
 scripts/build.sh               build, bundle (embeds Sparkle.framework), ad-hoc sign, install to ~/Applications, run --selftest
 scripts/install.sh             the README's curl | bash installer: latest release zip -> ~/Applications, no quarantine
+docs/                          README screenshots (runner, Wi-Fi and Mac names replaced with placeholders)
 .github/workflows/release.yml  Run workflow (bump) or v* tag -> build on macos-26 -> GitHub release with the zip + signed appcast.xml
 ```
 

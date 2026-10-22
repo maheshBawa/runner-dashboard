@@ -6,6 +6,8 @@ A macOS menu bar app for watching and managing the self-hosted GitHub Actions ru
 
 It finds every runner in `~/actions-runner*` that runs as a launch agent. No GitHub token is needed: everything comes from the runners' own files and processes.
 
+![The dashboard window: runners, network, this Mac and recent jobs](docs/dashboard.png)
+
 ## Install
 
 You need macOS 14 or later on Apple silicon. Run this in Terminal:
@@ -17,6 +19,8 @@ curl -fsSL https://raw.githubusercontent.com/maheshBawa/runner-dashboard/main/sc
 It installs the latest release into `~/Applications` and opens it in the menu bar.
 
 ## Features
+
+<img src="docs/menu.png" alt="The menu bar panel" width="345" align="right">
 
 - **Menu bar panel**: every runner at a glance (idle, running a job, or stopped), with CPU, memory and network use. The icon animates while a job runs.
 - **Dashboard window**: a page for each runner with:
@@ -34,6 +38,10 @@ It installs the latest release into `~/Applications` and opens it in the menu ba
   - Clean idle runners' workspaces when disk space is low.
   - Pause runners on low battery.
 - **Open at login**, and in-app updates.
+
+<br clear="right">
+
+![A runner's page: resources, storage breakdown, health and build times](docs/runner.png)
 
 ## Updating
 
