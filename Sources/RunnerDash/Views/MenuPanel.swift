@@ -74,6 +74,10 @@ struct MenuPanel: View {
                     .help("Quit Runner Dashboard")
             }
             .controlSize(.large)
+
+            if let appVersion {
+                Text("Runner Dashboard v\(appVersion)").font(.caption2).foregroundStyle(.secondary)
+            }
         }
         .padding(14)
         .frame(width: 340)

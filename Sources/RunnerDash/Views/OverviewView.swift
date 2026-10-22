@@ -64,13 +64,18 @@ struct OverviewView: View {
                         }
                     }
                     Spacer()
-                    Button { store.addingRunner = true } label: { Label("Add Runner", systemImage: "plus") }
-                        .help("Set up a new runner for an organization or repository")
-                    Button {
-                        openSettings()
-                        NSApp.activate(ignoringOtherApps: true)
-                    } label: { Label("Settings", systemImage: "gearshape") }
-                        .help("Notifications, keep awake, automatic cleanup, battery")
+                    HStack(spacing: 10) {
+                        if let appVersion {
+                            Text("v\(appVersion)").foregroundStyle(.secondary).help("Runner Dashboard version")
+                        }
+                        Button { store.addingRunner = true } label: { Label("Add Runner", systemImage: "plus") }
+                            .help("Set up a new runner for an organization or repository")
+                        Button {
+                            openSettings()
+                            NSApp.activate(ignoringOtherApps: true)
+                        } label: { Label("Settings", systemImage: "gearshape") }
+                            .help("Notifications, keep awake, automatic cleanup, battery")
+                    }
                 }
 
                 AppUpdateBanner()
