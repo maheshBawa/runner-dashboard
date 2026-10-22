@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Build
-        run: APP="$PWD/dist/Runner Dashboard.app" VERSION="${GITHUB_REF_NAME#v}" ./build.sh
+        run: APP="$PWD/dist/Runner Dashboard.app" VERSION="${GITHUB_REF_NAME#v}" scripts/build.sh
       - name: Zip
         run: ditto -c -k --keepParent "dist/Runner Dashboard.app" "dist/Runner-Dashboard-$GITHUB_REF_NAME.zip"
       - name: Publish

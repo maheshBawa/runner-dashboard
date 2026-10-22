@@ -1,2 +1,3 @@
-AppIcon.icns
+.build/
+.swiftpm/
 dist/
