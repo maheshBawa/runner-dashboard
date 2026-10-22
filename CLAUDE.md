@@ -1,7 +1,7 @@
 # Runner Dashboard
 
-Native SwiftUI menu bar + window app (macOS 14+, Apple silicon) for the self-hosted GitHub Actions runners on this Mac:
-`~/actions-runner*`, each running as a user LaunchAgent. It's a SwiftPM package with no Xcode project, built by `scripts/build.sh`.
+Native SwiftUI menu bar + window app (macOS 14+, Apple silicon) for the self-hosted GitHub Actions runners on this Mac,
+usually `~/actions-runner*`, each running as a user LaunchAgent. It's a SwiftPM package with no Xcode project, built by `scripts/build.sh`.
 
 ## Layout
 
@@ -73,6 +73,16 @@ docs/                          README screenshots (runner, Wi-Fi and Mac names r
 
 ## Runner and system gotchas
 
+- The dashboard shows `~/actions-runner*` plus the folders the user added with Find Runners (`Pref.addedRunners`). Nothing else is added automatically: the user asked for this.
+- Find Runners (`Core/RunnerSearch.swift`, `Views/FindRunnersSheet.swift`) searches the whole Mac, every user's folders included, as far as this account can read.
+  - A normal search runs when the sheet opens. It checks running `Runner.Listener` processes (`ps` shows every user's), then `actions.runner.*.plist` in every user's LaunchAgents and in `/Library/LaunchAgents` and `/Library/LaunchDaemons`, then Spotlight (`mdfind` for `Runner.Listener`). Spotlight covers indexed folders without permission prompts, Desktop and Documents included.
+  - Hard search (the checkbox, applied on Retry) also walks the whole disk from `/` for `.runner` files, external volumes included. It skips `/System` (`/System/Volumes/Data` repeats every file), `/private`, `/dev`, every user's Desktop, Documents, Downloads and media folders (permission prompts), and hidden folders, packages, `Library`, `node_modules`, `Pods`, `DerivedData`, `build`, `_work` and `Backups.backupdb`. On the user's Mac it finishes within the radar's one-turn minimum (2.4 s).
+  - Another user's runner (`isOtherUsers`, from the folder owner) can't be controlled from this account: Start, Stop, Restart and Clean are disabled for it.
+  - To test what only hard search finds, use a folder ending in `.noindex`: Spotlight never indexes it.
+  - Keep paths exactly as found, trimming only a trailing slash. `standardizingPath` and `resolvingSymlinksInPath` both turn `/private/tmp/…` into `/tmp/…`, and then the folder no longer matches the listener's path. The directory enumerator returns realpath-resolved URLs, so `walkForRunners` maps them back under the root it was given.
+  - The radar sweeps for at least one turn, so a fast search still reads as a scan.
+  - A runner started with `run.sh` has no `.service`, so `isService` is false and Start, Stop and Restart are disabled for it.
+- Two `.sheet` modifiers on one view compete, and a sheet attached to a view that renders nothing (such as `AppUpdateBanner` with no update) never shows. In `OverviewView`, Add Runner's sheet is on the page and Find Runners' sheet is on the header.
 - The listener spawns jobs from the versioned dir (`<runner>/bin.2.x.y/Runner.Worker`), not `<runner>/bin/`, so busy detection must match both.
 - `gh` has no `admin:org` scope, so GitHub-side runner status isn't available. Everything comes from local files and processes.
 - Add Runner (`Core/RunnerSetup.swift`, `Views/AddRunnerSheet.swift`) works like this:

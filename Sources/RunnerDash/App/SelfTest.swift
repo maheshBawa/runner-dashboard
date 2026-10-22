@@ -37,6 +37,28 @@ func selfTest() {
         precondition(cards.allSatisfy { contrast(h.markLight, $0) >= 3 } && darks.allSatisfy { contrast(h.markDark, $0) >= 3 }, "\(tone) mark")
         precondition(contrast(h.fill, 0xFFFFFF) >= 4.5 && contrast(h.tileTop, 0xFFFFFF) >= 3, "\(tone) fill")
     }
+    let base = NSTemporaryDirectory() + "runner-dashboard-dirs-\(getpid())"
+    let runnerFolders = ["home/actions-runner-a", "elsewhere/r1", "elsewhere/r1/_work/inner", "deep/a/b/c/r3", "home/Desktop/r4", "node_modules/r5", ".hidden/r6"]
+    for d in runnerFolders + ["home/Library/LaunchAgents"] { try? fm.createDirectory(atPath: "\(base)/\(d)", withIntermediateDirectories: true) }
+    for d in runnerFolders { fm.createFile(atPath: "\(base)/\(d)/.runner", contents: Data("{}".utf8)) }
+    precondition(runnerDirs(in: base + "/home", added: [base + "/elsewhere/r1", base + "/home/actions-runner-a"]) == [base + "/elsewhere/r1", base + "/home/actions-runner-a"])
+    let agents = base + "/home/Library/LaunchAgents"
+    NSDictionary(dictionary: ["WorkingDirectory": base + "/elsewhere/r1/"]).write(toFile: agents + "/actions.runner.x.r1.plist", atomically: true)
+    NSDictionary(dictionary: ["WorkingDirectory": base + "/not-a-runner"]).write(toFile: agents + "/com.example.other.plist", atomically: true)
+    precondition(launchAgentDirs(in: agents) == [base + "/elsewhere/r1/"])
+    let listeners = [Proc(pid: 1, ppid: 1, cpu: 0, rss: 0, etime: "", cmd: base + "/other dir/r2/bin.2.300.0/Runner.Listener run"),
+                     Proc(pid: 2, ppid: 1, cpu: 0, rss: 0, etime: "", cmd: "/bin/bash " + base + "/home/actions-runner-a/runsvc.sh")]
+    precondition(listenerDirs(listeners) == [base + "/other dir/r2"])
+    precondition(runnerFolder(of: "/Users/bob/actions-runner/bin.2.338.0/Runner.Listener") == "/Users/bob/actions-runner")
+    precondition(runnerFolder(of: "/Users/bob/actions-runner/config.sh") == nil)
+    // Depth 4 from base: finds r1 and actions-runner-a; not r3 (too deep), r1's insides, or the skipped, ignored and hidden folders.
+    var walked: [String] = []
+    walkForRunners(base, depth: 4, skip: [base + "/home/Desktop"], found: { walked.append($0) })
+    precondition(Set(walked) == [base + "/elsewhere/r1", base + "/home/actions-runner-a"], "\(walked)")
+    walked = []
+    walkForRunners(base, depth: .max, skip: [base + "/home/Desktop"], found: { walked.append($0) })
+    precondition(Set(walked) == [base + "/elsewhere/r1", base + "/home/actions-runner-a", base + "/deep/a/b/c/r3"], "\(walked)")
+    try? fm.removeItem(atPath: base)
     let pasted = "# Create the runner and start the configuration experience\n$ ./config.sh --url https://github.com/acme-labs/ --token AABBCC123\n"
     precondition(parseConfigCommand(pasted).map { $0.url == "https://github.com/acme-labs" && $0.token == "AABBCC123" } == true)
     precondition(parseConfigCommand("./config.sh --url https://github.com/acme-labs") == nil)

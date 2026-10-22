@@ -13,6 +13,7 @@ enum Pref {
     static let autoCleanDerivedData = "autoCleanDerivedData"
     static let batteryPause = "pauseOnLowBattery"
     static let batteryPercent = "pauseBelowBatteryPercent"
+    static let addedRunners = "addedRunnerDirs"  // runner folders outside ~/actions-runner*, added with Find Runners
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [

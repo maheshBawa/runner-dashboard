@@ -131,6 +131,9 @@ struct StatusPill: View {
 }
 
 /// Start/Stop, Restart and Clean, with confirmations for anything that cancels a job or deletes files.
+let notServiceHelp = "Started with run.sh, not installed as a service: stop or restart it where it runs"
+func otherUserHelp(_ r: Runner) -> String { "Belongs to \(r.owner): only they or an administrator can control it" }
+
 struct RunnerActions: View {
     @EnvironmentObject var store: Store
     let runner: Runner
@@ -144,16 +147,20 @@ struct RunnerActions: View {
     var body: some View {
         let r = runner, working = store.working.contains(r.dir)
         HStack(spacing: 8) {
-            if r.state == .stopped {
-                Button { store.start(r) } label: { Label("Start", systemImage: "play.fill") }
-                    .buttonStyle(.borderedProminent).tint(.okFill)
-            } else {
-                Button { confirm = .stop } label: { Label("Stop", systemImage: "stop.fill") }
+            Group {
+                if r.state == .stopped {
+                    Button { store.start(r) } label: { Label("Start", systemImage: "play.fill") }
+                        .buttonStyle(.borderedProminent).tint(.okFill)
+                } else {
+                    Button { confirm = .stop } label: { Label("Stop", systemImage: "stop.fill") }
+                }
+                Button { if r.state == .busy { confirm = .restart } else { store.restart(r) } } label: { Label("Restart", systemImage: "arrow.clockwise") }
             }
-            Button { if r.state == .busy { confirm = .restart } else { store.restart(r) } } label: { Label("Restart", systemImage: "arrow.clockwise") }
+            .disabled(!r.isService || r.isOtherUsers)
+            .help(r.isOtherUsers ? otherUserHelp(r) : r.isService ? "" : notServiceHelp)
             Button { confirm = .clean } label: { Label("Clean…", systemImage: "trash") }
-                .disabled(r.state == .busy)
-                .help(r.state == .busy ? "Not available while a job is running" : "Delete checkouts and build outputs in _work")
+                .disabled(r.state == .busy || r.isOtherUsers)
+                .help(r.isOtherUsers ? otherUserHelp(r) : r.state == .busy ? "Not available while a job is running" : "Delete checkouts and build outputs in _work")
             if working { ProgressView().controlSize(.small).padding(.leading, 4) }
         }
         .buttonStyle(.bordered)

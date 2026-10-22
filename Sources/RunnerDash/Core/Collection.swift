@@ -82,6 +82,19 @@ func storageBreakdown(_ dir: String) -> [StorageItem] {
     return storageKinds.map { StorageItem(name: $0.name, bytes: bytes[$0.name] ?? 0) }
 }
 
+/// Runner folders on the dashboard: ~/actions-runner*, plus the ones added with Find Runners.
+func runnerDirs(in root: String = home, added: [String] = UserDefaults.standard.stringArray(forKey: Pref.addedRunners) ?? []) -> [String] {
+    var seen = Set<String>()
+    return (list(root).filter { $0.hasPrefix("actions-runner") }.map { root + "/" + $0 } + added).filter { seen.insert($0).inserted }.sorted()
+}
+
+/// A runner folder's .runner settings (gitHubUrl, agentName, …), or nil when the folder isn't a configured runner.
+func runnerConfig(_ dir: String) -> [String: Any]? {
+    guard var data = FileManager.default.contents(atPath: dir + "/.runner") else { return nil }
+    if data.starts(with: [0xEF, 0xBB, 0xBF]) { data = data.dropFirst(3) }  // .runner is written with a BOM
+    return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+}
+
 func collect() -> ([Runner], SystemStats) {
     let procs = processes()
     var kids: [Int: [Proc]] = [:]
@@ -100,16 +113,14 @@ func collect() -> ([Runner], SystemStats) {
         if f.count == 3 { services[String(f[2])] = (Int(f[0]), String(f[1])) }
     }
 
-    var runners: [Runner] = list(home).filter { $0.hasPrefix("actions-runner") }.sorted().compactMap { name in
-        let dir = home + "/" + name
-        guard var data = FileManager.default.contents(atPath: dir + "/.runner") else { return nil }
-        if data.starts(with: [0xEF, 0xBB, 0xBF]) { data = data.dropFirst(3) }  // .runner is written with a BOM
-        guard let cfg = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return nil }
+    var runners: [Runner] = runnerDirs().compactMap { dir in
+        guard let cfg = runnerConfig(dir) else { return nil }
         let url = cfg["gitHubUrl"] as? String ?? ""
         let plist = read(dir + "/.service").trimmingCharacters(in: .whitespacesAndNewlines)
         var r = Runner(dir: dir, org: url.split(separator: "/").last.map(String.init) ?? "?", name: cfg["agentName"] as? String ?? "?",
                        url: url, plist: plist, label: ((plist as NSString).lastPathComponent as NSString).deletingPathExtension)
         r.service = services[r.label]
+        r.owner = (try? FileManager.default.attributesOfItem(atPath: dir)[.ownerAccountName] as? String) ?? ""
         r.listener = procs.first { $0.cmd.hasPrefix(dir + "/bin") && $0.cmd.contains("Runner.Listener") }
         if let w = worker(dir, in: procs) {
             let t = tree(w)
