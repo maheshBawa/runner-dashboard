@@ -1,7 +1,7 @@
 # Runner Dashboard
 
-Native SwiftUI menu bar + window app (macOS 14+, Apple silicon) for the self-hosted GitHub Actions runners on this Mac:
-`~/actions-runner*`, each running as a user LaunchAgent. It's a SwiftPM package with no Xcode project, built by `scripts/build.sh`.
+Native SwiftUI menu bar + window app (macOS 14+, Apple silicon) for the self-hosted GitHub Actions runners on this Mac,
+usually `~/actions-runner*`, each running as a user LaunchAgent. It's a SwiftPM package with no Xcode project, built by `scripts/build.sh`.
 
 ## Layout
 
@@ -73,6 +73,10 @@ docs/                          README screenshots (runner, Wi-Fi and Mac names r
 
 ## Runner and system gotchas
 
+- Discovery (`runnerDirs` in `Core/Collection.swift`) merges three sources: `~/actions-runner*`, the `WorkingDirectory` of every `~/Library/LaunchAgents/actions.runner.*.plist` (runners installed with `svc.sh`, anywhere), and the folders of running `Runner.Listener` processes (runners started with `run.sh`).
+  - A folder counts only if it has a `.runner` file.
+  - Keep paths exactly as found, trimming only a trailing slash. `standardizingPath` turns `/private/tmp/…` into `/tmp/…`, and then the folder no longer matches the listener's path.
+  - A `run.sh` runner has no `.service`, so `isService` is false and Start, Stop and Restart are disabled for it.
 - The listener spawns jobs from the versioned dir (`<runner>/bin.2.x.y/Runner.Worker`), not `<runner>/bin/`, so busy detection must match both.
 - `gh` has no `admin:org` scope, so GitHub-side runner status isn't available. Everything comes from local files and processes.
 - Add Runner (`Core/RunnerSetup.swift`, `Views/AddRunnerSheet.swift`) works like this:

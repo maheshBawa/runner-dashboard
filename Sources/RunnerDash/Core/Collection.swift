@@ -82,6 +82,24 @@ func storageBreakdown(_ dir: String) -> [StorageItem] {
     return storageKinds.map { StorageItem(name: $0.name, bytes: bytes[$0.name] ?? 0) }
 }
 
+/// Runner folders: ~/actions-runner*, plus runners anywhere else that are installed as a launch agent (svc.sh, which
+/// records the folder as WorkingDirectory) or running (run.sh, found by the listener's path).
+func runnerDirs(_ procs: [Proc], in root: String = home) -> [String] {
+    let agents = root + "/Library/LaunchAgents"
+    let named = list(root).filter { $0.hasPrefix("actions-runner") }.map { root + "/" + $0 }
+    let services = list(agents).filter { $0.hasPrefix("actions.runner.") && $0.hasSuffix(".plist") }.compactMap {
+        NSDictionary(contentsOfFile: agents + "/" + $0)?["WorkingDirectory"] as? String
+    }
+    let running = procs.compactMap { p in
+        p.cmd.range(of: "/bin[^/ ]*/Runner\\.Listener", options: .regularExpression).map { String(p.cmd[..<$0.lowerBound]) }
+    }
+    var seen = Set<String>()
+    // Only a trailing slash is trimmed: standardizingPath would turn /private/tmp/… into /tmp/…, and the folder has to
+    // match the listener's own path for its state.
+    return (named + services + running).filter { $0.hasPrefix("/") }.map { $0.hasSuffix("/") ? String($0.dropLast()) : $0 }
+        .filter { seen.insert($0).inserted }.sorted()
+}
+
 func collect() -> ([Runner], SystemStats) {
     let procs = processes()
     var kids: [Int: [Proc]] = [:]
@@ -100,8 +118,7 @@ func collect() -> ([Runner], SystemStats) {
         if f.count == 3 { services[String(f[2])] = (Int(f[0]), String(f[1])) }
     }
 
-    var runners: [Runner] = list(home).filter { $0.hasPrefix("actions-runner") }.sorted().compactMap { name in
-        let dir = home + "/" + name
+    var runners: [Runner] = runnerDirs(procs).compactMap { dir in
         guard var data = FileManager.default.contents(atPath: dir + "/.runner") else { return nil }
         if data.starts(with: [0xEF, 0xBB, 0xBF]) { data = data.dropFirst(3) }  // .runner is written with a BOM
         guard let cfg = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return nil }

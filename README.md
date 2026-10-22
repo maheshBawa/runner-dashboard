@@ -4,7 +4,7 @@
 
 A macOS menu bar app for watching and managing the self-hosted GitHub Actions runners on your Mac.
 
-It finds every runner in `~/actions-runner*` that runs as a launch agent. No GitHub token is needed: everything comes from the runners' own files and processes.
+It finds the runners on your Mac by itself, including ones you set up without it: any folder named `~/actions-runner*`, and any runner elsewhere that's installed as a service or running. No GitHub token is needed: everything comes from the runners' own files and processes.
 
 ![The dashboard window: runners, network, this Mac and recent jobs](docs/dashboard.png)
 

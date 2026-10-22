@@ -156,10 +156,11 @@ struct MenuRunnerRow: View {
                 ProgressView().controlSize(.small)
             } else {
                 Menu {
-                    if r.state == .stopped { Button("Start") { store.start(r) } }
-                    else { Button("Stop…") { if confirmStop(r) { store.stop(r) } }.disabled(r.state == .busy) }
-                    Button("Restart") { store.restart(r) }.disabled(r.state == .busy)
-                    if r.state == .busy { Text("Busy: stop or restart from the dashboard") }
+                    if r.state == .stopped { Button("Start") { store.start(r) }.disabled(!r.isService) }
+                    else { Button("Stop…") { if confirmStop(r) { store.stop(r) } }.disabled(r.state == .busy || !r.isService) }
+                    Button("Restart") { store.restart(r) }.disabled(r.state == .busy || !r.isService)
+                    if !r.isService { Text("Started with run.sh: stop or restart it where it runs") }
+                    else if r.state == .busy { Text("Busy: stop or restart from the dashboard") }
                     Divider()
                     Button("Open \(r.org)", action: open)
                 } label: { Image(systemName: "ellipsis.circle") }

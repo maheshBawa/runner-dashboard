@@ -38,6 +38,8 @@ struct Runner: Identifiable {
     var diagActivity: Date?
     var simulatorIncluded = false  // booted Simulators were counted in cpu/rss
     var logDir: String { "\(home)/Library/Logs/\(label)" }
+    /// Installed with svc.sh. A runner started with run.sh has no launchd service for Start, Stop and Restart.
+    var isService: Bool { !plist.isEmpty }
 }
 
 struct Sample: Identifiable {

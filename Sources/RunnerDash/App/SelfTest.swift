@@ -37,6 +37,17 @@ func selfTest() {
         precondition(cards.allSatisfy { contrast(h.markLight, $0) >= 3 } && darks.allSatisfy { contrast(h.markDark, $0) >= 3 }, "\(tone) mark")
         precondition(contrast(h.fill, 0xFFFFFF) >= 4.5 && contrast(h.tileTop, 0xFFFFFF) >= 3, "\(tone) fill")
     }
+    let base = NSTemporaryDirectory() + "runner-dashboard-dirs-\(getpid())"
+    for d in ["home/actions-runner-a", "home/Library/LaunchAgents", "elsewhere/r1"] { try? fm.createDirectory(atPath: "\(base)/\(d)", withIntermediateDirectories: true) }
+    let agents = base + "/home/Library/LaunchAgents"
+    NSDictionary(dictionary: ["WorkingDirectory": base + "/elsewhere/r1/"]).write(toFile: agents + "/actions.runner.x.r1.plist", atomically: true)
+    NSDictionary(dictionary: ["WorkingDirectory": base + "/home/actions-runner-a"]).write(toFile: agents + "/actions.runner.y.a.plist", atomically: true)
+    NSDictionary(dictionary: ["WorkingDirectory": base + "/not-a-runner"]).write(toFile: agents + "/com.example.other.plist", atomically: true)
+    let listeners = [Proc(pid: 1, ppid: 1, cpu: 0, rss: 0, etime: "", cmd: base + "/other dir/r2/bin.2.300.0/Runner.Listener run"),
+                     Proc(pid: 2, ppid: 1, cpu: 0, rss: 0, etime: "", cmd: base + "/home/actions-runner-a/bin/Runner.Listener run --startuptype service")]
+    let dirs = runnerDirs(listeners, in: base + "/home")
+    precondition(dirs == [base + "/elsewhere/r1", base + "/home/actions-runner-a", base + "/other dir/r2"], "\(dirs)")
+    try? fm.removeItem(atPath: base)
     let pasted = "# Create the runner and start the configuration experience\n$ ./config.sh --url https://github.com/acme-labs/ --token AABBCC123\n"
     precondition(parseConfigCommand(pasted).map { $0.url == "https://github.com/acme-labs" && $0.token == "AABBCC123" } == true)
     precondition(parseConfigCommand("./config.sh --url https://github.com/acme-labs") == nil)
