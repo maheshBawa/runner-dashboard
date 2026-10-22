@@ -37,6 +37,13 @@ func selfTest() {
         precondition(cards.allSatisfy { contrast(h.markLight, $0) >= 3 } && darks.allSatisfy { contrast(h.markDark, $0) >= 3 }, "\(tone) mark")
         precondition(contrast(h.fill, 0xFFFFFF) >= 4.5 && contrast(h.tileTop, 0xFFFFFF) >= 3, "\(tone) fill")
     }
+    let pasted = "# Create the runner and start the configuration experience\n$ ./config.sh --url https://github.com/acme-labs/ --token AABBCC123\n"
+    precondition(parseConfigCommand(pasted).map { $0.url == "https://github.com/acme-labs" && $0.token == "AABBCC123" } == true)
+    precondition(parseConfigCommand("./config.sh --url https://github.com/acme-labs") == nil)
+    precondition(newRunnerDir(for: "https://github.com/Acme/My.Repo").hasPrefix(home + "/actions-runner-my.repo"))
+    precondition(newRunnerDir(for: "https://github.com/..").hasPrefix(home + "/actions-runner-runner"))
+    precondition(configError("Http response code: NotFound from 'POST https://api.github.com/actions/runner-registration'").hasPrefix("GitHub didn't accept"))
+    precondition(configError("a\n\n b \nc\nd\n") == "b\nc\nd")
     // Sparkle compares CFBundleVersion: a local 1.1.0 built after the 1.1.1 release must still be offered 1.1.1.
     if let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String, let appVersion {
         precondition(build.hasPrefix(appVersion + "."), "CFBundleVersion \(build) must start with the version")

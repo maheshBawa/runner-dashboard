@@ -25,6 +25,9 @@ struct MenuPanel: View {
                     .font(.caption)
                 }
                 Spacer()
+                Button(action: addRunner) { Image(systemName: "plus").font(.body.weight(.medium)) }
+                    .buttonStyle(.borderless)
+                    .help("Add Runner")
                 Button {
                     openSettings()
                     NSApp.activate(ignoringOtherApps: true)
@@ -38,6 +41,10 @@ struct MenuPanel: View {
             VStack(spacing: 6) {
                 ForEach(store.runners) { r in
                     MenuRunnerRow(runner: r, open: { open([.runner(r.dir)]) }, confirmStop: confirmStop)
+                }
+                if store.runners.isEmpty {
+                    Button(action: addRunner) { Label("Add a Runner", systemImage: "plus").frame(maxWidth: .infinity) }
+                        .controlSize(.large)
                 }
             }
 
@@ -81,6 +88,11 @@ struct MenuPanel: View {
         alert.addButton(withTitle: "Cancel")
         NSApp.activate(ignoringOtherApps: true)
         return alert.runModal() == .alertFirstButtonReturn
+    }
+
+    private func addRunner() {
+        open([])
+        store.addingRunner = true
     }
 
     private func open(_ path: [Route]) {
