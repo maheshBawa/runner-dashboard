@@ -873,6 +873,8 @@ struct OverviewView: View {
                         .help("Notifications, keep awake, automatic cleanup, battery")
                 }
 
+                AppUpdateBanner()
+
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 16, alignment: .top)], spacing: 16) {
                     ForEach(store.runners) { RunnerCard(runner: $0) }
                 }
@@ -1896,6 +1898,8 @@ struct MenuPanel: View {
                     .buttonStyle(.borderless)
                     .help("Settings")
             }
+
+            AppUpdateBanner()
 
             VStack(spacing: 6) {
                 ForEach(store.runners) { r in
