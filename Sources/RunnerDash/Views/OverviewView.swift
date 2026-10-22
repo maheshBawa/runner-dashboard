@@ -68,6 +68,8 @@ struct OverviewView: View {
                         if let appVersion {
                             Text("v\(appVersion)").foregroundStyle(.secondary).help("Runner Dashboard version")
                         }
+                        Button { store.findingRunners = true } label: { Label("Find Runners", systemImage: "dot.radiowaves.left.and.right") }
+                            .help("Search this Mac for runners set up without Runner Dashboard")
                         Button { store.addingRunner = true } label: { Label("Add Runner", systemImage: "plus") }
                             .help("Set up a new runner for an organization or repository")
                         Button {
@@ -77,6 +79,8 @@ struct OverviewView: View {
                             .help("Notifications, keep awake, automatic cleanup, battery")
                     }
                 }
+                // On the header, not next to the Add Runner sheet: two .sheet modifiers on one view compete.
+                .sheet(isPresented: $store.findingRunners) { FindRunnersSheet().environmentObject(store) }
 
                 AppUpdateBanner()
 
@@ -86,8 +90,11 @@ struct OverviewView: View {
                 if store.runners.isEmpty {
                     VStack(spacing: 10) {
                         Text("No runners on this Mac yet").font(.headline)
-                        Button { store.addingRunner = true } label: { Label("Add Runner", systemImage: "plus") }
-                            .buttonStyle(.borderedProminent)
+                        HStack {
+                            Button { store.findingRunners = true } label: { Label("Find Runners", systemImage: "dot.radiowaves.left.and.right") }
+                            Button { store.addingRunner = true } label: { Label("Add Runner", systemImage: "plus") }
+                                .buttonStyle(.borderedProminent)
+                        }
                     }
                     .frame(maxWidth: .infinity)
                     .card()

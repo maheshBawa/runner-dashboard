@@ -73,10 +73,13 @@ docs/                          README screenshots (runner, Wi-Fi and Mac names r
 
 ## Runner and system gotchas
 
-- Discovery (`runnerDirs` in `Core/Collection.swift`) merges three sources: `~/actions-runner*`, the `WorkingDirectory` of every `~/Library/LaunchAgents/actions.runner.*.plist` (runners installed with `svc.sh`, anywhere), and the folders of running `Runner.Listener` processes (runners started with `run.sh`).
-  - A folder counts only if it has a `.runner` file.
-  - Keep paths exactly as found, trimming only a trailing slash. `standardizingPath` turns `/private/tmp/…` into `/tmp/…`, and then the folder no longer matches the listener's path.
-  - A `run.sh` runner has no `.service`, so `isService` is false and Start, Stop and Restart are disabled for it.
+- The dashboard shows `~/actions-runner*` plus the folders the user added with Find Runners (`Pref.addedRunners`). Nothing else is added automatically: the user asked for this.
+- Find Runners (`Core/RunnerSearch.swift`, `Views/FindRunnersSheet.swift`) checks running `Runner.Listener` processes, then the `WorkingDirectory` of every `~/Library/LaunchAgents/actions.runner.*.plist`, then walks folders for a `.runner` file. The walk covers home to depth 4 plus `/opt`, `/usr/local` and `/Users/Shared`.
+  - The walk skips Desktop, Documents, Downloads and the media folders: macOS would stop it with permission prompts. It also skips hidden folders, packages, `Library`, `node_modules`, `Pods`, `DerivedData`, `build` and `_work`.
+  - Keep paths exactly as found, trimming only a trailing slash. `standardizingPath` and `resolvingSymlinksInPath` both turn `/private/tmp/…` into `/tmp/…`, and then the folder no longer matches the listener's path. The directory enumerator returns realpath-resolved URLs, so `walkForRunners` maps them back under the root it was given.
+  - The radar sweeps for at least one turn, so a fast search still reads as a scan.
+  - A runner started with `run.sh` has no `.service`, so `isService` is false and Start, Stop and Restart are disabled for it.
+- Two `.sheet` modifiers on one view compete, and a sheet attached to a view that renders nothing (such as `AppUpdateBanner` with no update) never shows. In `OverviewView`, Add Runner's sheet is on the page and Find Runners' sheet is on the header.
 - The listener spawns jobs from the versioned dir (`<runner>/bin.2.x.y/Runner.Worker`), not `<runner>/bin/`, so busy detection must match both.
 - `gh` has no `admin:org` scope, so GitHub-side runner status isn't available. Everything comes from local files and processes.
 - Add Runner (`Core/RunnerSetup.swift`, `Views/AddRunnerSheet.swift`) works like this:
