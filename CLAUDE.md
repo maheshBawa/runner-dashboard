@@ -16,7 +16,7 @@ Resources/Info.plist           template: build.sh fills APP_VERSION and BUILD_NU
 scripts/build.sh               build, bundle (embeds Sparkle.framework), ad-hoc sign, install to ~/Applications, run --selftest
 scripts/install.sh             the README's curl | bash installer: latest release zip -> ~/Applications, no quarantine
 docs/                          README screenshots (runner, Wi-Fi and Mac names replaced with placeholders)
-.github/workflows/release.yml  Run workflow (bump) or v* tag -> build on macos-26 -> GitHub release with the zip + signed appcast.xml
+.github/workflows/release.yml  Run workflow (bump) or v* tag -> build on the self-hosted runner -> GitHub release with the zip + signed appcast.xml
 ```
 
 ## Commands
@@ -31,6 +31,7 @@ docs/                          README screenshots (runner, Wi-Fi and Mac names r
 - Deliver every feature and fix as a PR. Branch from `main` (`feat/…`, `fix/…`, `chore/…`), push, then `gh pr create`. Never commit or push to `main` directly: the user reviews and merges.
 - Before opening a PR, `scripts/build.sh` must pass (it runs `--selftest`). For UI changes, also check them in the running app.
 - Releases: the user runs Actions › Release › Run workflow and picks patch, minor or major (linked from README.md). CI bumps the latest tag, tags `main` and publishes. Pushing a `vX.Y.Z` tag still works for a specific version. Installed copies offer the update within an hour.
+- Release runner: `Runner-Dashboard-builder`, registered to this repo only, in `~/actions-runner-runner-dashboard` on the user's Mac. It uses that Mac's Xcode and the `gh` on its PATH. macOS registers any app bundle it sees, so the Clean up step unregisters the build (`lsregister -u`) and deletes it. Otherwise a second copy with the same bundle id stays on the Mac.
 
 ## App updates (Sparkle)
 

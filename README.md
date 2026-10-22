@@ -68,3 +68,5 @@ This builds the app, installs it into `~/Applications` and runs its self-check. 
 2. Choose `patch`, `minor` or `major`, then click **Run workflow** again.
 
 CI then bumps the latest tag (v1.2.3 becomes v1.2.4, v1.3.0 or v2.0.0), tags `main`, builds and signs the app, and publishes the release. Installed copies offer the update within an hour.
+
+The build runs on the repo's self-hosted runner, so that Mac must be awake with the runner online. Until then, the release waits in the queue.

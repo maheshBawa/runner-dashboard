@@ -17,8 +17,9 @@ jobs:
   release:
     # Only main is released from the button; a tag push releases whatever the tag points at.
     if: github.event_name == 'push' || github.ref == 'refs/heads/main'
-    # ponytail: GitHub-hosted, since the self-hosted runners are registered to orgs and this repo is personal.
-    runs-on: macos-26
+    # The repo's own runner on the maintainer's Mac (added with Add Runner), the only one these labels match. The job
+    # waits in the queue while that Mac is asleep or the runner is stopped.
+    runs-on: [self-hosted, macOS, ARM64]
     steps:
       - uses: actions/checkout@v5
         with:
@@ -63,3 +64,10 @@ jobs:
         run: |
           gh release create "$TAG" dist/release/*.zip dist/release/appcast.xml --target "$GITHUB_SHA" --generate-notes --notes \
             'Install: `curl -fsSL https://raw.githubusercontent.com/maheshBawa/runner-dashboard/main/scripts/install.sh | bash`. The app is ad-hoc signed, so if you download the zip in a browser instead, run `xattr -dr com.apple.quarantine "Runner Dashboard.app"` after unzipping.'
+      - name: Clean up
+        if: always()
+        # macOS registers every app bundle it sees. Unregister and delete the build, so no second copy of the app (same
+        # bundle id) stays on the runner's Mac for macOS to launch instead of the installed one.
+        run: |
+          /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u "$PWD/dist/Runner Dashboard.app" || true
+          rm -rf dist
