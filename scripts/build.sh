@@ -28,8 +28,9 @@ cp "$BIN/RunnerDash" "$APP/Contents/MacOS/RunnerDash"
 rm -rf "$APP/Contents/Frameworks"
 mkdir -p "$APP/Contents/Frameworks"
 ditto "$BIN/Sparkle.framework" "$APP/Contents/Frameworks/Sparkle.framework"
-# A new build number per build makes Finder and Notification Center reload the icon instead of using a cached copy.
-sed -e "s/BUILD_NUMBER/$(date +%Y%m%d%H%M%S)/" -e "s/APP_VERSION/${VERSION#v}/" Resources/Info.plist > "$APP/Contents/Info.plist"
+# Build number "<version>.<UTC build time>": Sparkle compares it, so the version decides and the time only breaks ties
+# (UTC, so CI and local builds agree). Changing per build also makes Finder and Notification Center reload the icon.
+sed -e "s/BUILD_NUMBER/${VERSION#v}.$(date -u +%Y%m%d%H%M%S)/" -e "s/APP_VERSION/${VERSION#v}/" Resources/Info.plist > "$APP/Contents/Info.plist"
 codesign --force -s - "$APP"
 # Tell Finder, Spotlight and Notification Center about the (new) icon.
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$APP"

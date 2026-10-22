@@ -1,4 +1,5 @@
 import Foundation
+import Sparkle
 
 func selfTest() {
     let (jobs, current, last) = parseEvents("""
@@ -36,5 +37,10 @@ func selfTest() {
         precondition(cards.allSatisfy { contrast(h.markLight, $0) >= 3 } && darks.allSatisfy { contrast(h.markDark, $0) >= 3 }, "\(tone) mark")
         precondition(contrast(h.fill, 0xFFFFFF) >= 4.5 && contrast(h.tileTop, 0xFFFFFF) >= 3, "\(tone) fill")
     }
+    // Sparkle compares CFBundleVersion: a local 1.1.0 built after the 1.1.1 release must still be offered 1.1.1.
+    if let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String, let appVersion {
+        precondition(build.hasPrefix(appVersion + "."), "CFBundleVersion \(build) must start with the version")
+    }
+    precondition(SUStandardVersionComparator().compareVersion("1.1.0.20261022161139", toVersion: "1.1.1.20261022110814") == .orderedAscending)
     print("ok")
 }
