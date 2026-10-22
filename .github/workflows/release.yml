@@ -62,4 +62,4 @@ jobs:
         # Add Developer ID signing + notarization to drop the xattr step.
         run: |
           gh release create "$TAG" dist/release/*.zip dist/release/appcast.xml --target "$GITHUB_SHA" --generate-notes --notes \
-            'Ad-hoc signed. After unzipping, run `xattr -dr com.apple.quarantine "Runner Dashboard.app"` and move it to ~/Applications, or download with `gh release download` to skip the quarantine.'
+            'Install: `curl -fsSL https://raw.githubusercontent.com/maheshBawa/runner-dashboard/main/scripts/install.sh | bash`. The app is ad-hoc signed, so if you download the zip in a browser instead, run `xattr -dr com.apple.quarantine "Runner Dashboard.app"` after unzipping.'
