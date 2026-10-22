@@ -28,6 +28,7 @@ It installs the latest release into `~/Applications` and opens it in the menu ba
   - build times and success rate
   - live logs
   - CPU, memory, disk and health
+- **Add runners**: paste the `./config.sh` line from GitHub's New self-hosted runner page into **Add Runner**, and optionally add labels. The app downloads the runner, registers it and starts it as a service.
 - **Controls**:
   - Start, stop and restart runners. Stop always asks first.
   - Free disk space: clean a runner's workspace, remove old runner versions, or clear Xcode DerivedData.

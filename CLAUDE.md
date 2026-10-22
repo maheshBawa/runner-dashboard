@@ -59,6 +59,10 @@ docs/                          README screenshots (runner, Wi-Fi and Mac names r
 
 - The listener spawns jobs from the versioned dir (`<runner>/bin.2.x.y/Runner.Worker`), not `<runner>/bin/`, so busy detection must match both.
 - `gh` has no `admin:org` scope, so GitHub-side runner status isn't available. Everything comes from local files and processes.
+- Add Runner (`Core/RunnerSetup.swift`) has these requirements:
+  - It runs `config.sh` through the user's interactive login shell. `config.sh` saves its PATH and tool variables to `.path`/`.env` for every job, and the app's own environment has no Homebrew.
+  - `svc.sh` must run from the runner folder, because it uses `pwd`.
+  - The registration token comes from the pasted command, since the app has no GitHub login.
 - `nettop -P -L 0` (per-runner network usage) has these quirks:
   - Run it on a pty: into a pipe it buffers output for minutes.
   - Its stdin must never hit EOF, or it spins at ~145% CPU.

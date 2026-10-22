@@ -64,6 +64,8 @@ struct OverviewView: View {
                         }
                     }
                     Spacer()
+                    Button { store.addingRunner = true } label: { Label("Add Runner", systemImage: "plus") }
+                        .help("Set up a new runner for an organization or repository")
                     Button {
                         openSettings()
                         NSApp.activate(ignoringOtherApps: true)
@@ -75,6 +77,15 @@ struct OverviewView: View {
 
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 300), spacing: 16, alignment: .top)], spacing: 16) {
                     ForEach(store.runners) { RunnerCard(runner: $0) }
+                }
+                if store.runners.isEmpty {
+                    VStack(spacing: 10) {
+                        Text("No runners on this Mac yet").font(.headline)
+                        Button { store.addingRunner = true } label: { Label("Add Runner", systemImage: "plus") }
+                            .buttonStyle(.borderedProminent)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .card()
                 }
 
                 SectionHeader(title: "Network").padding(.top, 10)
@@ -108,6 +119,7 @@ struct OverviewView: View {
             .frame(maxWidth: .infinity)
         }
         .background(Backdrop(tint: .accentColor))
+        .sheet(isPresented: $store.addingRunner) { AddRunnerSheet().environmentObject(store) }
         .confirmationDialog("Clear Xcode DerivedData?", isPresented: $confirmDerived) {
             Button("Delete \(fileSize(store.derivedDataBytes))", role: .destructive) { store.clearDerivedData() }
         } message: {

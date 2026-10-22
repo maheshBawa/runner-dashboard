@@ -14,6 +14,7 @@ final class Store: ObservableObject {
     @Published var working: Set<String> = []              // runner dirs / paths with an action in flight
     @Published var error: String?
     @Published var path: [Route] = []                      // window navigation
+    @Published var addingRunner = false                    // the Add Runner sheet
     @Published var logRunner = "" { didSet { if logRunner != oldValue { reloadLog() } } }
     @Published var logKind = LogKind.service { didSet { if logKind != oldValue { reloadLog() } } }
     @Published var logText = ""

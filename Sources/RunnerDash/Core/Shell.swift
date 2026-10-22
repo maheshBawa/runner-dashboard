@@ -4,10 +4,12 @@ let home = FileManager.default.homeDirectoryForCurrentUser.path
 let derivedData = home + "/Library/Developer/Xcode/DerivedData"
 
 @discardableResult
-func run(_ exe: String, _ args: [String]) -> (out: String, ok: Bool) {
+func run(_ exe: String, _ args: [String], in dir: String? = nil) -> (out: String, ok: Bool) {
     let p = Process()
     p.executableURL = URL(fileURLWithPath: exe)
     p.arguments = args
+    if let dir { p.currentDirectoryURL = URL(fileURLWithPath: dir) }
+    p.standardInput = FileHandle.nullDevice  // nothing run here may wait for input
     let pipe = Pipe()
     p.standardOutput = pipe
     p.standardError = pipe
