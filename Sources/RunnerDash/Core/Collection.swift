@@ -120,6 +120,7 @@ func collect() -> ([Runner], SystemStats) {
         var r = Runner(dir: dir, org: url.split(separator: "/").last.map(String.init) ?? "?", name: cfg["agentName"] as? String ?? "?",
                        url: url, plist: plist, label: ((plist as NSString).lastPathComponent as NSString).deletingPathExtension)
         r.service = services[r.label]
+        r.owner = (try? FileManager.default.attributesOfItem(atPath: dir)[.ownerAccountName] as? String) ?? ""
         r.listener = procs.first { $0.cmd.hasPrefix(dir + "/bin") && $0.cmd.contains("Runner.Listener") }
         if let w = worker(dir, in: procs) {
             let t = tree(w)

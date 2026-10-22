@@ -49,10 +49,15 @@ func selfTest() {
     let listeners = [Proc(pid: 1, ppid: 1, cpu: 0, rss: 0, etime: "", cmd: base + "/other dir/r2/bin.2.300.0/Runner.Listener run"),
                      Proc(pid: 2, ppid: 1, cpu: 0, rss: 0, etime: "", cmd: "/bin/bash " + base + "/home/actions-runner-a/runsvc.sh")]
     precondition(listenerDirs(listeners) == [base + "/other dir/r2"])
+    precondition(runnerFolder(of: "/Users/bob/actions-runner/bin.2.338.0/Runner.Listener") == "/Users/bob/actions-runner")
+    precondition(runnerFolder(of: "/Users/bob/actions-runner/config.sh") == nil)
     // Depth 4 from base: finds r1 and actions-runner-a; not r3 (too deep), r1's insides, or the skipped, ignored and hidden folders.
     var walked: [String] = []
     walkForRunners(base, depth: 4, skip: [base + "/home/Desktop"], found: { walked.append($0) })
     precondition(Set(walked) == [base + "/elsewhere/r1", base + "/home/actions-runner-a"], "\(walked)")
+    walked = []
+    walkForRunners(base, depth: .max, skip: [base + "/home/Desktop"], found: { walked.append($0) })
+    precondition(Set(walked) == [base + "/elsewhere/r1", base + "/home/actions-runner-a", base + "/deep/a/b/c/r3"], "\(walked)")
     try? fm.removeItem(atPath: base)
     let pasted = "# Create the runner and start the configuration experience\n$ ./config.sh --url https://github.com/acme-labs/ --token AABBCC123\n"
     precondition(parseConfigCommand(pasted).map { $0.url == "https://github.com/acme-labs" && $0.token == "AABBCC123" } == true)

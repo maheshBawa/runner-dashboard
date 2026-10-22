@@ -8,6 +8,8 @@ struct FindRunnersSheet: View {
     @State private var picked: Set<String> = []
     @State private var searching: String? = "Checking running runners"  // nil once the search is done
     @State private var task: Task<Void, Never>?
+    @State private var hard = false     // Hard search: also walk every folder (applies on Retry)
+    @State private var wasHard = false  // what the last search did, for the caption
 
     var body: some View {
         let shown = Set(store.runners.map(\.dir))
@@ -17,7 +19,8 @@ struct FindRunnersSheet: View {
                 .font(.title2.bold())
             RadarView(blips: found.map { (id: $0.dir, label: $0.org, dim: shown.contains($0.dir)) }, sweeping: searching != nil)
                 .frame(width: 260, height: 260)
-            Text(searching ?? "Searched running runners, launch agents, your home folder (except Desktop, Documents and Downloads), /opt, /usr/local and /Users/Shared.")
+            Text(searching ?? (wasHard ? "Searched running runners, launch agents, Spotlight and every folder on this Mac that your account can read, for all users."
+                                                : "Searched running runners, launch agents and Spotlight. For what Spotlight doesn't index, tick Hard search and press Retry."))
                 .font(.caption).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center).lineLimit(2).truncationMode(.middle)
             if !found.isEmpty {
@@ -29,6 +32,10 @@ struct FindRunnersSheet: View {
                 .frame(maxHeight: 200)
             }
             HStack {
+                Toggle("Hard search", isOn: $hard)
+                    .toggleStyle(.checkbox)
+                    .help("Also look through every folder on this Mac, external drives included. Slower.")
+                Button("Retry", action: start).disabled(searching != nil)
                 Spacer()
                 Button(searching != nil ? "Cancel" : "Done") { dismiss() }.keyboardShortcut(.cancelAction)
                 Button("Add \(picked.count) Runner\(picked.count == 1 ? "" : "s")", action: add)
@@ -64,9 +71,10 @@ struct FindRunnersSheet: View {
     }
 
     private func start() {
-        let began = Date()
+        let (began, hard) = (Date(), hard)
+        (found, picked, wasHard, searching) = ([], [], hard, "Checking running runners")
         task = Task.detached(priority: .userInitiated) {
-            searchRunners(found: { f in
+            searchRunners(hard: hard, found: { f in
                 DispatchQueue.main.async {
                     withAnimation(.spring(duration: 0.4)) { found.append(f) }
                     if !store.runners.contains(where: { $0.dir == f.dir }) { picked.insert(f.dir) }
