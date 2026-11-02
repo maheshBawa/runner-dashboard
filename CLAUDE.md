@@ -6,13 +6,13 @@ usually `~/actions-runner*`, each running as a user LaunchAgent. It's a SwiftPM 
 ## Layout
 
 ```
-Package.swift                  two executable targets, Swift 5 language mode, Sparkle 2 dependency
+Package.swift                  one executable target, Swift 5 language mode, Sparkle 2 dependency
 Sources/RunnerDash/            the app
   App/                         entry point, scenes, --selftest
   Core/                        runner discovery, Store, Add Runner setup, network accounting, automation, Sparkle updater (no views)
   Views/                       SwiftUI screens and building blocks
-Sources/IconTool/              draws the app icon PNG
 Resources/Info.plist           template: build.sh fills APP_VERSION and BUILD_NUMBER
+Resources/AppIcon.icon/        the layered app icon (Icon Composer document): build.sh compiles it with actool
 scripts/build.sh               build, bundle (embeds Sparkle.framework), ad-hoc sign, install to ~/Applications, run --selftest
 scripts/install.sh             the README's curl | bash installer: latest release zip -> ~/Applications, no quarantine
 docs/                          README screenshots (runner, Wi-Fi and Mac names replaced with placeholders)
@@ -71,6 +71,7 @@ docs/                          README screenshots (runner, Wi-Fi and Mac names r
 - File-scoped state must stay in the same file as its users. That covers the top-level `private` caches (`runLinkCache`, `serviceLogCache`) and `Automation`'s `private(set)` properties, which the app-update extension sets.
 - `UNUserNotificationCenter` crashes outside an app bundle, so guard on `Bundle.main.bundleIdentifier`.
 - App icon: custom shapes only. SF Symbols aren't allowed in app icons.
+  - Edit `Resources/AppIcon.icon` in Icon Composer, or by hand: square vector layers with no mask, shadow or glow, because the system adds those. Preview it with `ictool` (inside Icon Composer.app), and regenerate `docs/icon.png` from it.
 - Stop always asks for confirmation: accidental clicks stopped runners before.
 
 ## Runner and system gotchas

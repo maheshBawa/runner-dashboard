@@ -7,20 +7,14 @@ VERSION="${VERSION:-$(git describe --tags --abbrev=0 2>/dev/null || echo 1.0)}"
 swift build -c release
 BIN=$(swift build -c release --show-bin-path)
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-# App icon: drawn by IconTool, regenerated only when its source changes.
-ICNS=.build/AppIcon.icns
-if [ ! -f $ICNS ] || [ Sources/IconTool/IconTool.swift -nt $ICNS ]; then
-  TMP=$(mktemp -d)
-  "$BIN/IconTool" "$TMP/icon.png"
-  mkdir "$TMP/AppIcon.iconset"
-  for s in 16 32 128 256 512; do
-    sips -z $s $s "$TMP/icon.png" --out "$TMP/AppIcon.iconset/icon_${s}x${s}.png" >/dev/null
-    sips -z $((s * 2)) $((s * 2)) "$TMP/icon.png" --out "$TMP/AppIcon.iconset/icon_${s}x${s}@2x.png" >/dev/null
-  done
-  iconutil -c icns "$TMP/AppIcon.iconset" -o $ICNS
-  rm -rf "$TMP"
+# App icon: the Icon Composer document, compiled only when it changes (needs Xcode 26). macOS 26+ draws its layers from
+# Assets.car; earlier versions use AppIcon.icns.
+ICON=.build/icon
+if [ ! -f $ICON/Assets.car ] || [ -n "$(find Resources/AppIcon.icon -newer $ICON/Assets.car)" ]; then
+  mkdir -p $ICON
+  xcrun actool Resources/AppIcon.icon --compile $ICON --platform macosx --minimum-deployment-target 14.0 --app-icon AppIcon --output-partial-info-plist $ICON/partial.plist >/dev/null
 fi
-cp $ICNS "$APP/Contents/Resources/AppIcon.icns"
+cp $ICON/Assets.car $ICON/AppIcon.icns "$APP/Contents/Resources/"
 # A fresh file rather than overwriting in place, so a running copy of the app doesn't crash on a changed binary.
 rm -f "$APP/Contents/MacOS/RunnerDash"
 cp "$BIN/RunnerDash" "$APP/Contents/MacOS/RunnerDash"
