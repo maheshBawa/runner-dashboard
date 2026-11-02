@@ -14,7 +14,6 @@ let package = Package(
             // build.sh embeds Sparkle.framework in Contents/Frameworks.
             linkerSettings: [.unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks"])]
         ),
-        .executableTarget(name: "IconTool"),
     ],
     swiftLanguageModes: [.v5]
 )

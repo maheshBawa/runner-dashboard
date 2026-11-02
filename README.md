@@ -99,7 +99,7 @@ The app checks for a new release every hour. When one is out, the menu bar panel
 
 ## Build from source
 
-You need Xcode 16 or later.
+You need Xcode 26 or later.
 
 ```sh
 git clone https://github.com/maheshBawa/runner-dashboard
