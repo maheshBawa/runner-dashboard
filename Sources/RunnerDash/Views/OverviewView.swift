@@ -10,8 +10,8 @@ struct RunnerCard: View {
     var body: some View {
         let r = runner
         VStack(alignment: .leading, spacing: 16) {
-            // A real link so the keyboard and VoiceOver can open the runner. The tap below covers the rest of the card.
-            NavigationLink(value: Route.runner(r.dir)) {
+            // A real button so the keyboard and VoiceOver can open the runner. The tap below covers the rest of the card.
+            Button { store.path.append(.runner(r.dir)) } label: {
                 HStack(spacing: 12) {
                     RunnerIcon(state: r.state)
                     VStack(alignment: .leading, spacing: 3) {
