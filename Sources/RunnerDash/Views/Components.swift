@@ -146,7 +146,7 @@ struct RunnerActions: View {
 
     var body: some View {
         let r = runner, working = store.working.contains(r.dir)
-        HStack(spacing: 8) {
+        HStack(spacing: 12) {
             Group {
                 if r.state == .stopped {
                     Button { store.start(r) } label: { Label("Start", systemImage: "play.fill") }
@@ -206,7 +206,8 @@ struct JobList: View {
                     Spacer()
                     Label(duration(j.duration), systemImage: "clock").font(.callout).monospacedDigit().foregroundStyle(.secondary)
                     if let url = j.url {
-                        Link(destination: url) { Image(systemName: "arrow.up.right.square") }.help("Open this run on GitHub")
+                        Link(destination: url) { Image(systemName: "arrow.up.right.square").frame(width: 28, height: 28).contentShape(Rectangle()) }
+                            .help("Open this run on GitHub")
                     }
                 }
                 .padding(.vertical, 10)

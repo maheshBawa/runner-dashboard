@@ -101,6 +101,7 @@ struct MenuPanel: View {
 
     private func open(_ path: [Route]) {
         store.path = path
+        NSApp.setActivationPolicy(.regular)  // before activating: macOS hands over the menu bar only on activation
         openWindow(id: "dashboard")
         NSApp.activate(ignoringOtherApps: true)
     }
@@ -123,35 +124,42 @@ struct MenuRunnerRow: View {
     var body: some View {
         let r = runner, working = store.working.contains(r.dir)
         HStack(spacing: 10) {
-            RunnerIcon(state: r.state, size: 30)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(r.org).font(.system(.body, design: .rounded).weight(.semibold)).lineLimit(1)
-                switch r.state {
-                case .busy:
-                    HStack(spacing: 4) {
-                        Text("Building \(r.current?.name ?? "a job")").lineLimit(1)
-                        Spacer(minLength: 4)
-                        if let start = r.current?.start { Text(duration(Date().timeIntervalSince(start))).monospacedDigit() }
-                    }
-                    .font(.caption).foregroundStyle(Color.infoText)
-                    ProgressView().progressViewStyle(.linear).controlSize(.small).tint(.infoMark)
-                case .idle:
-                    HStack(spacing: 4) {
-                        Text("Idle").foregroundStyle(Color.okText)
-                        if let j = r.jobs.first {
-                            Text("·").foregroundStyle(.secondary)
-                            Image(systemName: j.result == "Succeeded" ? "checkmark.circle.fill" : j.result.hasPrefix("Cancel") ? "minus.circle.fill" : "xmark.circle.fill")
-                                .foregroundStyle(j.result == "Succeeded" ? Color.okMark : j.result.hasPrefix("Cancel") ? Color.secondary : Color.dangerMark)
-                            Text(j.name).lineLimit(1).truncationMode(.middle)
-                            Text(shortAgo(j.end)).foregroundStyle(.secondary).fixedSize()
+            // A real button so the keyboard and VoiceOver can open the runner. The tap below covers the row's edges.
+            Button(action: open) {
+                HStack(spacing: 10) {
+                    RunnerIcon(state: r.state, size: 30)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(r.org).font(.system(.body, design: .rounded).weight(.semibold)).lineLimit(1)
+                        switch r.state {
+                        case .busy:
+                            HStack(spacing: 4) {
+                                Text("Building \(r.current?.name ?? "a job")").lineLimit(1)
+                                Spacer(minLength: 4)
+                                if let start = r.current?.start { Text(duration(Date().timeIntervalSince(start))).monospacedDigit() }
+                            }
+                            .font(.caption).foregroundStyle(Color.infoText)
+                            ProgressView().progressViewStyle(.linear).controlSize(.small).tint(.infoMark)
+                        case .idle:
+                            HStack(spacing: 4) {
+                                Text("Idle").foregroundStyle(Color.okText)
+                                if let j = r.jobs.first {
+                                    Text("·").foregroundStyle(.secondary)
+                                    Image(systemName: j.result == "Succeeded" ? "checkmark.circle.fill" : j.result.hasPrefix("Cancel") ? "minus.circle.fill" : "xmark.circle.fill")
+                                        .foregroundStyle(j.result == "Succeeded" ? Color.okMark : j.result.hasPrefix("Cancel") ? Color.secondary : Color.dangerMark)
+                                    Text(j.name).lineLimit(1).truncationMode(.middle)
+                                    Text(shortAgo(j.end)).foregroundStyle(.secondary).fixedSize()
+                                }
+                            }
+                            .font(.caption).foregroundStyle(.secondary)
+                        case .stopped:
+                            Text("Stopped · not picking up jobs").font(.caption).foregroundStyle(Color.dangerText)
                         }
                     }
-                    .font(.caption).foregroundStyle(.secondary)
-                case .stopped:
-                    Text("Stopped · not picking up jobs").font(.caption).foregroundStyle(Color.dangerText)
+                    Spacer(minLength: 4)
                 }
+                .contentShape(Rectangle())
             }
-            Spacer(minLength: 4)
+            .buttonStyle(.plain)
             if working {
                 ProgressView().controlSize(.small)
             } else {

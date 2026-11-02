@@ -181,7 +181,6 @@ final class NetworkUsage: NSObject, ObservableObject, CLLocationManagerDelegate 
         }
         location.delegate = self
         locationManagerDidChangeAuthorization(location)
-        if location.authorizationStatus == .notDetermined { location.requestWhenInUseAuthorization() }
         startNettop()
         let snapshots = DispatchSource.makeTimerSource(queue: queue)
         snapshots.schedule(deadline: .now(), repeating: .milliseconds(250))

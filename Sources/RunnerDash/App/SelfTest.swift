@@ -36,6 +36,7 @@ func selfTest() {
         precondition(cards.allSatisfy { contrast(h.textLight, $0) >= 4.5 } && darks.allSatisfy { contrast(h.textDark, $0) >= 4.5 }, "\(tone) text")
         precondition(cards.allSatisfy { contrast(h.markLight, $0) >= 3 } && darks.allSatisfy { contrast(h.markDark, $0) >= 3 }, "\(tone) mark")
         precondition(contrast(h.fill, 0xFFFFFF) >= 4.5 && contrast(h.tileTop, 0xFFFFFF) >= 3, "\(tone) fill")
+        precondition(cards.allSatisfy { contrast(h.contrastLight, $0) >= 7 } && darks.allSatisfy { contrast(h.contrastDark, $0) >= 7 }, "\(tone) increased contrast")
     }
     let base = NSTemporaryDirectory() + "runner-dashboard-dirs-\(getpid())"
     let runnerFolders = ["home/actions-runner-a", "elsewhere/r1", "elsewhere/r1/_work/inner", "deep/a/b/c/r3", "home/Desktop/r4", "node_modules/r5", ".hidden/r6"]

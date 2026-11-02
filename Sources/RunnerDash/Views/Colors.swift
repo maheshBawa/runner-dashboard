@@ -6,29 +6,34 @@ import SwiftUI
 /// - `mark`: icons, rings, bars and chart lines: vivid, at least 3:1 (WCAG AA for graphics).
 /// - `fill` and `tileTop`: solid badges and tiles: white text on `fill` is at least 4.5:1, white glyphs on the
 ///   `tileTop`→`fill` gradient at least 3:1.
+/// - `contrastLight` and `contrastDark`: replace all of these while Increase Contrast is on: at least 7:1. White sits on
+///   `fill` and `tileTop`, so those use `contrastLight` in both appearances.
 /// macOS's own green/orange/cyan/yellow are only 1.2–3.2:1 as text on light backgrounds, so words never use them.
 enum Tone: CaseIterable {
     case ok, info, danger, warn, purple, teal, neutral
     // Tailwind CSS shades.
-    var hex: (textLight: UInt32, textDark: UInt32, markLight: UInt32, markDark: UInt32, fill: UInt32, tileTop: UInt32) {
+    var hex: (textLight: UInt32, textDark: UInt32, markLight: UInt32, markDark: UInt32, fill: UInt32, tileTop: UInt32, contrastLight: UInt32, contrastDark: UInt32) {
         switch self {
-        case .ok: return (0x15803D, 0x4ADE80, 0x16A34A, 0x4ADE80, 0x15803D, 0x16A34A)
-        case .info: return (0x2563EB, 0x93C5FD, 0x3B82F6, 0x60A5FA, 0x2563EB, 0x3B82F6)
-        case .danger: return (0xDC2626, 0xFCA5A5, 0xEF4444, 0xF87171, 0xDC2626, 0xEF4444)
-        case .warn: return (0xC2410C, 0xFBBF24, 0xEA580C, 0xFBBF24, 0xC2410C, 0xEA580C)
-        case .purple: return (0x9333EA, 0xD8B4FE, 0xA855F7, 0xC084FC, 0x9333EA, 0xA855F7)
-        case .teal: return (0x0F766E, 0x2DD4BF, 0x0D9488, 0x2DD4BF, 0x0F766E, 0x0D9488)
-        case .neutral: return (0x52525B, 0xD4D4D8, 0x71717A, 0xA1A1AA, 0x52525B, 0x71717A)
+        case .ok: return (0x15803D, 0x4ADE80, 0x16A34A, 0x4ADE80, 0x15803D, 0x16A34A, 0x166534, 0xBBF7D0)
+        case .info: return (0x2563EB, 0x93C5FD, 0x3B82F6, 0x60A5FA, 0x2563EB, 0x3B82F6, 0x1E40AF, 0xBFDBFE)
+        case .danger: return (0xDC2626, 0xFCA5A5, 0xEF4444, 0xF87171, 0xDC2626, 0xEF4444, 0x991B1B, 0xFECACA)
+        case .warn: return (0xC2410C, 0xFBBF24, 0xEA580C, 0xFBBF24, 0xC2410C, 0xEA580C, 0x9A3412, 0xFDE68A)
+        case .purple: return (0x9333EA, 0xD8B4FE, 0xA855F7, 0xC084FC, 0x9333EA, 0xA855F7, 0x6B21A8, 0xE9D5FF)
+        case .teal: return (0x0F766E, 0x2DD4BF, 0x0D9488, 0x2DD4BF, 0x0F766E, 0x0D9488, 0x115E59, 0x99F6E4)
+        case .neutral: return (0x52525B, 0xD4D4D8, 0x71717A, 0xA1A1AA, 0x52525B, 0x71717A, 0x27272A, 0xE4E4E7)
         }
     }
     var text: Color { adaptive(hex.textLight, hex.textDark) }
     var mark: Color { adaptive(hex.markLight, hex.markDark) }
-    var fill: Color { Color(nsColor: NSColor(hex: hex.fill)) }
-    var tileTop: Color { Color(nsColor: NSColor(hex: hex.tileTop)) }
+    var fill: Color { adaptive(hex.fill, hex.fill, contrastDark: hex.contrastLight) }
+    var tileTop: Color { adaptive(hex.tileTop, hex.tileTop, contrastDark: hex.contrastLight) }
 
-    private func adaptive(_ light: UInt32, _ dark: UInt32) -> Color {
-        let (l, d) = (NSColor(hex: light), NSColor(hex: dark))
-        return Color(nsColor: NSColor(name: nil) { $0.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? d : l })
+    private func adaptive(_ light: UInt32, _ dark: UInt32, contrastDark: UInt32? = nil) -> Color {
+        let (l, d, cl, cd) = (NSColor(hex: light), NSColor(hex: dark), NSColor(hex: hex.contrastLight), NSColor(hex: contrastDark ?? hex.contrastDark))
+        return Color(nsColor: NSColor(name: nil) {
+            let isDark = $0.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            return NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast ? (isDark ? cd : cl) : (isDark ? d : l)
+        })
     }
 }
 
