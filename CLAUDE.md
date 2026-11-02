@@ -85,6 +85,8 @@ docs/                          README screenshots (runner, Wi-Fi and Mac names r
   - The radar sweeps for at least one turn, so a fast search still reads as a scan.
   - A runner started with `run.sh` has no `.service`, so `isService` is false and Start, Stop and Restart are disabled for it.
 - Two `.sheet` modifiers on one view compete, and a sheet attached to a view that renders nothing (such as `AppUpdateBanner` with no update) never shows. In `OverviewView`, Add Runner's sheet is on the page and Find Runners' sheet is on the header.
+- The window's sidebar selection is derived from `store.path`, so anything that sets the path moves it. `Route.overview` only exists for the sidebar: the path is empty on the Overview page.
+  - The detail column is a plain `switch`. A `NavigationStack` there gets popped to its root whenever the sidebar selection changes, and `NavigationLink(value:)` needs a stack, so links to a page are a `Button` that sets `store.path`.
 - The listener spawns jobs from the versioned dir (`<runner>/bin.2.x.y/Runner.Worker`), not `<runner>/bin/`, so busy detection must match both.
 - `gh` has no `admin:org` scope, so GitHub-side runner status isn't available. Everything comes from local files and processes.
 - Add Runner (`Core/RunnerSetup.swift`, `Views/AddRunnerSheet.swift`) works like this:

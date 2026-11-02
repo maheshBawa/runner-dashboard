@@ -39,7 +39,7 @@ No GitHub login is needed. The app reads everything from the runners' own files 
 
 The **menu bar panel** lists every runner as idle, building or stopped, with the job it's running. It also shows CPU, memory, free disk space and network use. The menu bar icon animates while a job runs.
 
-The **dashboard window** adds the network summary, the state of the Mac (CPU, memory, disk, power, thermal, Xcode DerivedData) and the most recent jobs across all runners, each linked to its run on GitHub.
+The **dashboard window** adds the network summary, the state of the Mac (CPU, memory, disk, power, thermal, Xcode DerivedData) and the most recent jobs across all runners, each linked to its run on GitHub. A sidebar switches between that overview, network usage and each runner's page.
 
 Both show the app's version.
 

@@ -13,7 +13,7 @@ final class Store: ObservableObject {
     @Published var derivedDataBytes: Int64?
     @Published var working: Set<String> = []              // runner dirs / paths with an action in flight
     @Published var error: String?
-    @Published var path: [Route] = []                      // window navigation
+    @Published var path: [Route] = []                      // window navigation: the selected page, empty on Overview
     @Published var addingRunner = false                    // the Add Runner sheet
     @Published var findingRunners = false                  // the Find Runners sheet
     @Published var logRunner = "" { didSet { if logRunner != oldValue { reloadLog() } } }

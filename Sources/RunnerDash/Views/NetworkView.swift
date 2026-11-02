@@ -13,13 +13,14 @@ struct UsageFigure: View {
 }
 
 struct NetworkSummaryCard: View {
+    @EnvironmentObject var store: Store
     @EnvironmentObject var net: NetworkUsage
     @State private var hover = false
 
     var body: some View {
         let cal = Calendar.current
         let today = cal.startOfDay(for: Date())
-        NavigationLink(value: Route.network) {
+        Button { store.path = [.network] } label: {
             HStack(spacing: 16) {
                 ToneBadge(icon: connectionIcon(net.current), tone: .teal, size: 58)
                 VStack(alignment: .leading, spacing: 3) {
