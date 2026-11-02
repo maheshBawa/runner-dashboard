@@ -60,6 +60,10 @@ final class MenuBarIcon: ObservableObject {
 
     init() {
         DistributedNotificationCenter.default().addObserver(forName: .previewMenuIcon, object: nil, queue: .main) { [weak self] _ in self?.preview() }
+        NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.shown = nil  // Reduce Motion may have changed: apply even though the states didn't
+            self?.apply()
+        }
     }
 
     func update(_ states: [RunnerState]) {
@@ -77,7 +81,7 @@ final class MenuBarIcon: ObservableObject {
         let states = previewUntil > Date() ? (real.isEmpty ? [.busy] : real.map { _ in RunnerState.busy }) : real
         guard states != shown else { return }
         shown = states
-        if states.contains(.busy) {
+        if states.contains(.busy), !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {  // otherwise a still busy icon
             if timer == nil {
                 let t = Timer(timeInterval: 0.09, repeats: true) { [weak self] _ in
                     guard let self, let shown = self.shown else { return }

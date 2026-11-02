@@ -207,8 +207,7 @@ struct RunnerDetailView: View {
                     .foregroundStyle(.white)
                     .tint(.white)
                     .padding(14)
-                    .background(LinearGradient(colors: [Tone.info.tileTop, Tone.info.fill], startPoint: .leading, endPoint: .trailing),
-                                in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .background(Tone.info.fill, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
 
                 HStack {

@@ -25,9 +25,7 @@ final class Automation: NSObject, ObservableObject, UNUserNotificationCenterDele
         super.init()
         Pref.registerDefaults()
         guard Bundle.main.bundleIdentifier != nil else { return }  // notifications need a real app bundle (not a bare test binary)
-        let center = UNUserNotificationCenter.current()
-        center.delegate = self
-        center.requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        UNUserNotificationCenter.current().delegate = self
     }
 
     func update(_ store: Store) {
@@ -169,7 +167,11 @@ final class Automation: NSObject, ObservableObject, UNUserNotificationCenterDele
         content.body = body
         content.sound = .default
         content.userInfo = ["runner": runner ?? "", "url": url?.absoluteString ?? ""]
-        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
+        // Asks the first time there's something to say, not at launch. Once people have decided, this just reports their answer.
+        let center = UNUserNotificationCenter.current()
+        center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
+            if granted { center.add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)) }
+        }
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler done: @escaping () -> Void) {

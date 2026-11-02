@@ -14,6 +14,7 @@ struct UsageFigure: View {
 
 struct NetworkSummaryCard: View {
     @EnvironmentObject var net: NetworkUsage
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hover = false
 
     var body: some View {
@@ -37,7 +38,7 @@ struct NetworkSummaryCard: View {
         .buttonStyle(.plain)
         .card()
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color.tealText.opacity(hover ? 0.55 : 0), lineWidth: 1.5))
-        .scaleEffect(hover ? 1.006 : 1)
+        .scaleEffect(hover && !reduceMotion ? 1.006 : 1)
         .animation(.easeOut(duration: 0.15), value: hover)
         .onHover { hover = $0 }
     }

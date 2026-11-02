@@ -82,8 +82,11 @@ docs/                          README screenshots (runner, Wi-Fi and Mac names r
   - Another user's runner (`isOtherUsers`, from the folder owner) can't be controlled from this account: Start, Stop, Restart and Clean are disabled for it.
   - To test what only hard search finds, use a folder ending in `.noindex`: Spotlight never indexes it.
   - Keep paths exactly as found, trimming only a trailing slash. `standardizingPath` and `resolvingSymlinksInPath` both turn `/private/tmp/…` into `/tmp/…`, and then the folder no longer matches the listener's path. The directory enumerator returns realpath-resolved URLs, so `walkForRunners` maps them back under the root it was given.
-  - The radar sweeps for at least one turn, so a fast search still reads as a scan.
+  - The radar sweeps for at least one turn, so a fast search still reads as a scan. With Reduce Motion on, it holds still and doesn't wait.
   - A runner started with `run.sh` has no `.service`, so `isService` is false and Start, Stop and Restart are disabled for it.
+- `LSUIElement` starts the app with no Dock icon, ⌘-Tab entry or menu bar. `RootView` switches to the `.regular` activation policy while the dashboard window is open, and back to `.accessory` when it closes.
+- Permission prompts wait for the feature: Location comes from the banner on the Network page, and notifications are requested just before the first one is sent. Don't ask at launch.
+- Runner cards and panel rows are `NavigationLink`/`Button` with a tap gesture around them. The gesture alone is invisible to the keyboard and VoiceOver.
 - Two `.sheet` modifiers on one view compete, and a sheet attached to a view that renders nothing (such as `AppUpdateBanner` with no update) never shows. In `OverviewView`, Add Runner's sheet is on the page and Find Runners' sheet is on the header.
 - The listener spawns jobs from the versioned dir (`<runner>/bin.2.x.y/Runner.Worker`), not `<runner>/bin/`, so busy detection must match both.
 - `gh` has no `admin:org` scope, so GitHub-side runner status isn't available. Everything comes from local files and processes.

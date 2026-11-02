@@ -3,29 +3,35 @@ import SwiftUI
 
 struct RunnerCard: View {
     @EnvironmentObject var store: Store
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let runner: Runner
     @State private var hover = false
 
     var body: some View {
         let r = runner
         VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 12) {
-                RunnerIcon(state: r.state)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(r.org).font(.headline).lineLimit(1)
-                    Text(statusText).font(.caption).foregroundStyle(r.state == .busy ? Color.infoText : .secondary).lineLimit(1)
+            // A real link so the keyboard and VoiceOver can open the runner. The tap below covers the rest of the card.
+            NavigationLink(value: Route.runner(r.dir)) {
+                HStack(spacing: 12) {
+                    RunnerIcon(state: r.state)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(r.org).font(.headline).lineLimit(1)
+                        Text(statusText).font(.caption).foregroundStyle(r.state == .busy ? Color.infoText : .secondary).lineLimit(1)
+                    }
+                    Spacer(minLength: 8)
+                    StatusPill(state: r.state)
+                    Image(systemName: "chevron.right").font(.callout.weight(.semibold)).foregroundStyle(.secondary)
                 }
-                Spacer(minLength: 8)
-                StatusPill(state: r.state)
-                Image(systemName: "chevron.right").font(.callout.weight(.semibold)).foregroundStyle(.secondary)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             RunnerActions(runner: r).controlSize(.small)
         }
         .card()
         .contentShape(Rectangle())
         .onTapGesture { store.path.append(.runner(r.dir)) }
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(r.state.tone.mark.opacity(hover ? 0.6 : 0), lineWidth: 1.5))
-        .scaleEffect(hover ? 1.012 : 1)
+        .scaleEffect(hover && !reduceMotion ? 1.012 : 1)
         .animation(.easeOut(duration: 0.15), value: hover)
         .onHover { hover = $0 }
     }

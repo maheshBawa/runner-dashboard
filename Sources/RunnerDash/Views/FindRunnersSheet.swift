@@ -4,6 +4,7 @@ import SwiftUI
 struct FindRunnersSheet: View {
     @EnvironmentObject var store: Store
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var found: [FoundRunner] = []
     @State private var picked: Set<String> = []
     @State private var searching: String? = "Checking running runners"  // nil once the search is done
@@ -17,7 +18,7 @@ struct FindRunnersSheet: View {
         VStack(spacing: 16) {
             Text(searching != nil ? "Finding Runners…" : new == 0 ? "No New Runners" : "Found \(new) New Runner\(new == 1 ? "" : "s")")
                 .font(.title2.bold())
-            RadarView(blips: found.map { (id: $0.dir, label: $0.org, dim: shown.contains($0.dir)) }, sweeping: searching != nil)
+            RadarView(blips: found.map { (id: $0.dir, label: $0.org, dim: shown.contains($0.dir)) }, sweeping: searching != nil && !reduceMotion)
                 .frame(width: 260, height: 260)
             Text(searching ?? (wasHard ? "Searched running runners, launch agents, Spotlight and every folder on this Mac that your account can read, for all users."
                                                 : "Searched running runners, launch agents and Spotlight. For what Spotlight doesn't index, tick Hard search and press Retry."))
@@ -71,17 +72,17 @@ struct FindRunnersSheet: View {
     }
 
     private func start() {
-        let (began, hard) = (Date(), hard)
+        let (began, hard, still) = (Date(), hard, reduceMotion)
         (found, picked, wasHard, searching) = ([], [], hard, "Checking running runners")
         task = Task.detached(priority: .userInitiated) {
             searchRunners(hard: hard, found: { f in
                 DispatchQueue.main.async {
-                    withAnimation(.spring(duration: 0.4)) { found.append(f) }
+                    withAnimation(still ? nil : .spring(duration: 0.4)) { found.append(f) }
                     if !store.runners.contains(where: { $0.dir == f.dir }) { picked.insert(f.dir) }
                 }
             }, searching: { s in DispatchQueue.main.async { searching = s } })
             // At least one full sweep, so a quick search still reads as a scan.
-            let rest = 2.4 - Date().timeIntervalSince(began)
+            let rest = (still ? 0 : 2.4) - Date().timeIntervalSince(began)
             if rest > 0 { try? await Task.sleep(nanoseconds: UInt64(rest * 1e9)) }
             await MainActor.run { withAnimation { searching = nil } }
         }
@@ -140,6 +141,7 @@ struct RadarView: View {
 
 private struct RadarBlip: View {
     let label: String, dim: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var ping = false
 
     var body: some View {
@@ -150,6 +152,6 @@ private struct RadarBlip: View {
             Text(label).font(.caption2.weight(.semibold)).foregroundStyle(.secondary).fixedSize().offset(y: 14)
         }
         .transition(.scale.combined(with: .opacity))
-        .onAppear { withAnimation(.easeOut(duration: 1.2)) { ping = true } }
+        .onAppear { if !reduceMotion { withAnimation(.easeOut(duration: 1.2)) { ping = true } } }
     }
 }

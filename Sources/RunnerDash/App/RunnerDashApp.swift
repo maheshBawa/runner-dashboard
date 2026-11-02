@@ -26,12 +26,15 @@ struct RootView: View {
             Text(store.error ?? "")
         }
         .onAppear {
+            NSApp.setActivationPolicy(.regular)  // a normal app while this window is open: Dock icon, ⌘-Tab and its menu bar
             store.automation.openRunner = { [weak store] dir in
                 store?.path = [.runner(dir)]
+                NSApp.setActivationPolicy(.regular)  // before activating: macOS hands over the menu bar only on activation
                 openWindow(id: "dashboard")
                 NSApp.activate(ignoringOtherApps: true)
             }
         }
+        .onDisappear { NSApp.setActivationPolicy(.accessory) }
     }
 }
 
